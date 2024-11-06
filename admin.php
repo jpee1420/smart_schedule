@@ -11,18 +11,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $subject = $_POST['subject'];
     $start_time = $_POST['start_time'];
     $end_time = $_POST['end_time'];
-    $date = $_POST['date'];
-    $notes = $_POST['notes'];
+    $day = $_POST['day'];  // Replacing date with day dropdown
 
-    $sql = "INSERT INTO schedules (room_id, professor_id, subject, start_time, end_time, date, notes)
-            VALUES ('$room_id', '$professor_id', '$subject', '$start_time', '$end_time', '$date', '$notes')";
+    // Insert into schedules without notes and date
+    $sql = "INSERT INTO schedules (room_id, professor_id, subject, start_time, end_time, day)
+            VALUES ('$room_id', '$professor_id', '$subject', '$start_time', '$end_time', '$day')";
     $conn->query($sql);
     header('Location: admin.php');
 }
 
-// Fetch rooms and professors for the form
+// Fetch rooms, professors, and subjects for the form
 $rooms = $conn->query("SELECT * FROM rooms");
 $professors = $conn->query("SELECT * FROM professors");
+// Assuming subjects are stored in a `subjects` table, modify as necessary
+$subjects = $conn->query("SELECT * FROM schedules");
 
 // Fetch all schedules
 $schedules = $conn->query("SELECT schedules.*, rooms.name AS room_name, professors.name AS professor_name
@@ -85,12 +87,12 @@ $schedules = $conn->query("SELECT schedules.*, rooms.name AS room_name, professo
             <input type="time" class="form-control" id="end_time" name="end_time" required>
         </div>
         <div class="form-group">
-            <label for="date">Date</label>
-            <input type="date" class="form-control" id="date" name="date" required>
-        </div>
-        <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea class="form-control" id="notes" name="notes"></textarea>
+            <label for="day">Day:</label>
+            <select class="form-control" id="day" name="day" required>
+                <option value="MWF">MWF</option>
+                <option value="TTH">TTH</option>
+                <option value="SAT">SAT</option>
+            </select>
         </div>
         <button type="submit" class="btn btn-primary">Add Schedule</button>
     </form>
@@ -107,7 +109,6 @@ $schedules = $conn->query("SELECT schedules.*, rooms.name AS room_name, professo
                 <th>Start Time</th>
                 <th>End Time</th>
                 <th>Date</th>
-                <th>Notes</th>
             </tr>
         </thead>
         <tbody>
@@ -118,8 +119,7 @@ $schedules = $conn->query("SELECT schedules.*, rooms.name AS room_name, professo
                     <td><?= $schedule['professor_name'] ?></td>
                     <td><?= $schedule['start_time'] ?></td>
                     <td><?= $schedule['end_time'] ?></td>
-                    <td><?= $schedule['date'] ?></td>
-                    <td><?= $schedule['notes'] ?></td>
+                    <td><?= $schedule['day'] ?></td>
                 </tr>
             <?php endwhile; ?>
         </tbody>

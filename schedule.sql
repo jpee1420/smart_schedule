@@ -28,20 +28,32 @@ CREATE TABLE schedules (
 
 USE smart_schedule;
 
+USE smart_schedule;
+
+-- Insert 7 rooms
 INSERT INTO rooms (name) VALUES
-('Room 101'),
-('Room 102'),
-('Room 103'),
-('Room 104');
+('LR1'),
+('LR2'),
+('LR4'),
+('LR4'),
+('MM3'),
+('Grad 1'),
+('Room');
 
+-- Insert 5 professors
 INSERT INTO professors (name, profile_image) VALUES
-('Prof. John Doe', 'prof1.png'),
-('Prof. Jane Smith', 'prof2.png'),
-('Prof. Mark Davis', 'prof3.png'),
-('Prof. Emily White', 'prof4.png');
+('Diosdado Caronongan', 'prof1.png'),
+('Andrew Caronongan', 'prof2.png'),
+('Rina Cabansag', 'prof3.png'),
+('Eugevar Silang', 'prof4.png'),
+('Lorenz Camacho', 'prof5.png');
 
+-- Insert schedules (sample subjects and times)
 INSERT INTO schedules (room_id, professor_id, subject, start_time, end_time, date, notes) VALUES
-(1, 1, 'Mathematics 101', '08:00:00', '10:00:00', '2024-11-06', 'Chapter 1: Introduction to Algebra'),
-(2, 2, 'Physics 202', '10:00:00', '12:00:00', '2024-11-06', 'Chapter 5: Laws of Motion'),
-(3, 3, 'Chemistry 301', '12:00:00', '14:00:00', '2024-11-06', 'Chapter 3: Organic Chemistry'),
-(4, 4, 'Computer Science 101', '14:00:00', '16:00:00', '2024-11-06', 'Chapter 2: Data Structures');
+(1, 1, 'Introduction to Programming', '08:00:00', '10:00:00', '2024-11-06', 'Introductory course to programming'),
+(2, 2, 'Data Structures', '10:00:00', '12:00:00', '2024-11-06', 'Covering stacks, queues, trees, and graphs'),
+(3, 3, 'Web Development', '12:00:00', '14:00:00', '2024-11-06', 'HTML, CSS, JavaScript, PHP basics'),
+(4, 4, 'Database Systems', '14:00:00', '16:00:00', '2024-11-06', 'Introduction to relational databases'),
+(5, 5, 'Software Engineering', '08:00:00', '10:00:00', '2024-11-06', 'Software development life cycle'),
+(6, 1, 'Algorithms', '10:00:00', '12:00:00', '2024-11-06', 'Fundamental algorithms and problem-solving techniques'),
+(7, 2, 'Operating Systems', '12:00:00', '14:00:00', '2024-11-06', 'Process management, memory management, file systems');

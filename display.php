@@ -5,8 +5,7 @@ $current_date = date('Y-m-d');
 $schedules = $conn->query("SELECT schedules.*, rooms.name AS room_name, professors.name AS professor_name, professors.profile_image
                            FROM schedules
                            JOIN rooms ON schedules.room_id = rooms.id
-                           JOIN professors ON schedules.professor_id = professors.id
-                           WHERE date = '$current_date'");
+                           JOIN professors ON schedules.professor_id = professors.id");
 
 $schedules_list = [];
 while ($schedule = $schedules->fetch_assoc()) {
@@ -172,17 +171,8 @@ $page2_schedules = array_slice($schedules_list, 4);    // Remaining schedules (u
         <div class="quadrant-container">
             <?php foreach ($page1_schedules as $schedule):
                 $current_time = date('H:i:s');
-                $status = "";
                 $start_time = $schedule['start_time'];
                 $end_time = $schedule['end_time'];
-
-                if ($current_time >= $start_time && $current_time <= $end_time) {
-                    $status = "ongoing";
-                } elseif ($current_time < $start_time) {
-                    $status = "upcoming";
-                } else {
-                    $status = "completed";
-                }
                 ?>
                 <div class="card">
                     <div class="card-header">
@@ -191,13 +181,11 @@ $page2_schedules = array_slice($schedules_list, 4);    // Remaining schedules (u
                     <div class="card-body">
                         <div>
                             <h4 class="card-title"><?= $schedule['subject'] ?></h4>
-                            <p class="room-status <?= $status ?>">
-                                <?= ucfirst($status) ?>
-                            </p>
                             <p class="mb-2"><strong>Time:</strong> <?= $schedule['start_time'] ?> - <?= $schedule['end_time'] ?></p>
+                            <p class="mb-2"><strong>Day:</strong> <?= $schedule['day'] ?></p>
                         </div>
                         <div class="professor-info">
-                            <img src="<?= $schedule['profile_image'] ?>" alt="Professor" class="professor-img">
+                            <img src="prof-img/<?= $schedule['profile_image'] ?>" alt="Professor" class="professor-img">
                             <div>
                                 <strong>Professor:</strong><br>
                                 <?= $schedule['professor_name'] ?>
@@ -209,22 +197,14 @@ $page2_schedules = array_slice($schedules_list, 4);    // Remaining schedules (u
         </div>
     </div>
 
+
     <!-- Page 2: Regular grid layout -->
     <div id="page2" class="page">
-        <div class="regular-grid">
+        <div class="quadrant-container">
             <?php foreach ($page2_schedules as $schedule):
                 $current_time = date('H:i:s');
-                $status = "";
                 $start_time = $schedule['start_time'];
                 $end_time = $schedule['end_time'];
-
-                if ($current_time >= $start_time && $current_time <= $end_time) {
-                    $status = "ongoing";
-                } elseif ($current_time < $start_time) {
-                    $status = "upcoming";
-                } else {
-                    $status = "completed";
-                }
                 ?>
                 <div class="card">
                     <div class="card-header">
@@ -233,13 +213,11 @@ $page2_schedules = array_slice($schedules_list, 4);    // Remaining schedules (u
                     <div class="card-body">
                         <div>
                             <h4 class="card-title"><?= $schedule['subject'] ?></h4>
-                            <p class="room-status <?= $status ?>">
-                                <?= ucfirst($status) ?>
-                            </p>
                             <p class="mb-2"><strong>Time:</strong> <?= $schedule['start_time'] ?> - <?= $schedule['end_time'] ?></p>
+                            <p class="mb-2"><strong>Day:</strong> <?= $schedule['day'] ?></p>
                         </div>
                         <div class="professor-info">
-                            <img src="<?= $schedule['profile_image'] ?>" alt="Professor" class="professor-img">
+                            <img src="prof-img/<?= $schedule['profile_image'] ?>" alt="Professor" class="professor-img">
                             <div>
                                 <strong>Professor:</strong><br>
                                 <?= $schedule['professor_name'] ?>

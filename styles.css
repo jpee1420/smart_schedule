@@ -1,0 +1,57 @@
+.sidebar {
+    min-height: 100vh;
+    background: #343a40;
+}
+
+.nav-link {
+    color: #fff;
+}
+
+.nav-link:hover {
+    background: #495057;
+}
+
+.schedule-card {
+    transition: transform 0.2s;
+}
+
+.schedule-card:hover {
+    transform: translateY(-5px);
+}
+
+.professor-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.sidebar-right {
+    background-color: #2c3e50;
+    min-height: 100vh;
+    border-left: 1px solid rgba(255,255,255,0.1);
+}
+
+.professor-status-card {
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.professor-image-small {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.status-select {
+    background-color: rgba(255,255,255,0.9);
+    border: none;
+    font-size: 0.875rem;
+}
+
+.status-select option {
+    background-color: white;
+    color: #333;
+}

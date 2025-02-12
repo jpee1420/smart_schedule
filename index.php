@@ -93,7 +93,16 @@ require_once 'functions.php';
                                             Room <?php echo $schedule['room_name']; ?>
                                         </p>
                                         <div class="d-flex justify-content-between align-items-center mt-3">
-                                            <span class="badge bg-<?php echo $schedule['professor_status'] == 'Present' ? 'success' : 'danger'; ?>">
+                                            <?php
+                                            $badgeClass = 'success';
+                                            if ($schedule['professor_status'] === 'Absent') {
+                                                $badgeClass = 'danger';
+                                            } else if ($schedule['professor_status'] === 'On Leave') {
+                                                $badgeClass = 'warning';
+                                            }
+                                            ?>
+                                            <span class="badge bg-<?php echo $badgeClass; ?>" 
+                                                  data-professor-id="<?php echo $schedule['professor_id']; ?>">
                                                 <?php echo $schedule['professor_status']; ?>
                                             </span>
                                             <div>

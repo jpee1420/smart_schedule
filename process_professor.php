@@ -1,16 +1,38 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'functions.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'updateStatus') {
-        $id = $_POST['id'];
-        $status = $_POST['status'];
+        $professorId = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        $status = isset($_POST['status']) ? $_POST['status'] : '';
         
-        if (updateProfessorStatus($conn, $id, $status)) {
-            echo json_encode(['success' => true]);
+        // Validate status
+        $validStatuses = ['Present', 'Absent', 'On Leave'];
+        if (!in_array($status, $validStatuses)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid status']);
+            exit;
+        }
+
+        // Update all schedules for this professor
+        $sql = "UPDATE schedules SET professor_status = ? WHERE professor_id = ?";
+        $stmt = $conn->prepare($sql);
+        
+        if ($stmt) {
+            $stmt->bind_param("si", $status, $professorId);
+            $success = $stmt->execute();
+            
+            if ($success) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false, 'message' => 'Database update failed']);
+            }
+            $stmt->close();
         } else {
-            echo json_encode(['success' => false, 'error' => 'Database error']);
+            echo json_encode(['success' => false, 'message' => 'Failed to prepare statement']);
         }
         exit;
     }
@@ -89,4 +111,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 header('Location: index.php');
 exit();
+
+$conn->close();
 ?>

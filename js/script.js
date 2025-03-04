@@ -48,16 +48,15 @@ function editProfessor(id, name) {
     });
 }
 
-function editSchedule(id, roomId, subject, professorId, day, startTime, endTime, note, status) {
+function editSchedule(id, roomId, courseId, professorId, day, startTime, endTime) {
     editRecord('#addScheduleModal', {
         id: id,
-        subject: subject,
+        course_id: courseId,
         room_id: roomId,
         professor_id: professorId,
         start_time: startTime,
         end_time: endTime,
-        day: day,
-        notes: note
+        day: day
     });
 }
 
@@ -79,7 +78,9 @@ function deleteProfessor(id) {
 }
 
 function deleteSchedule(id) {
-    deleteRecord('process_schedule.php', id);
+    if (confirm('Are you sure you want to delete this schedule?')) {
+        window.location.href = `process_schedule.php?action=delete&id=${id}`;
+    }
 }
 
 function deleteCourse(id) {
@@ -179,39 +180,296 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function showAlert(message, type = 'success') {
+    const alertContainer = document.getElementById('alertContainer');
+    const alertHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    alertContainer.innerHTML = alertHTML;
+
+    // Auto-dismiss after 3 seconds
+    setTimeout(() => {
+        const alertElement = document.querySelector('.alert');
+        if (alertElement) {
+            const bsAlert = new bootstrap.Alert(alertElement);
+            bsAlert.close();
+        }
+    }, 3000);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Auto-dismiss alerts after 3 seconds
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 3000);
+    });
+
+    // Schedule form submission
     const scheduleForm = document.querySelector('#addScheduleModal form');
     if (scheduleForm) {
-        scheduleForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            try {
-                const formData = new FormData(this);
-                const isEdit = formData.get('id') ? true : false;
-                
-                // Set the appropriate action
-                formData.set('action', isEdit ? 'edit' : 'add');
-                
-                const response = await fetch('process_schedule.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Close modal before showing alert
-                    const modal = bootstrap.Modal.getInstance(document.querySelector('#addScheduleModal'));
-                    modal.hide();
-                    
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    throw new Error(data.message || `Failed to ${isEdit ? 'edit' : 'add'} schedule`);
-                }
-            } catch (error) {
-                alert(error.message || 'An error occurred while processing the schedule');
+        scheduleForm.addEventListener('submit', function(e) {
+            const modal = bootstrap.Modal.getInstance(document.querySelector('#addScheduleModal'));
+            if (modal) {
+                modal.hide();
             }
         });
     }
+    
+    // Room search functionality
+    const roomSearchInput = document.getElementById('roomSearchInput');
+    if (roomSearchInput) {
+        roomSearchInput.addEventListener('keyup', function() {
+            try {
+                const searchTerm = this.value.toLowerCase();
+                const roomTable = document.querySelector('#rooms table tbody');
+                if (!roomTable) {
+                    console.error('Room table body not found');
+                    return;
+                }
+                
+                const rows = roomTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    try {
+                        const roomNameCell = row.querySelector('td:nth-child(2)');
+                        if (!roomNameCell) {
+                            console.error('Room name cell not found in row', row);
+                            return;
+                        }
+                        
+                        const roomName = roomNameCell.textContent.toLowerCase();
+                        if (roomName.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error processing room row:', rowError);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in room search:', error);
+            }
+        });
+    } else {
+        console.warn('Room search input not found');
+    }
+    
+    // Professor search functionality
+    const professorSearchInput = document.getElementById('professorSearchInput');
+    if (professorSearchInput) {
+        professorSearchInput.addEventListener('keyup', function() {
+            try {
+                const searchTerm = this.value.toLowerCase();
+                const professorTable = document.querySelector('#professors table tbody');
+                if (!professorTable) {
+                    console.error('Professor table body not found');
+                    return;
+                }
+                
+                const rows = professorTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    try {
+                        const professorNameCell = row.querySelector('td:nth-child(3)');
+                        if (!professorNameCell) {
+                            console.error('Professor name cell not found in row', row);
+                            return;
+                        }
+                        
+                        const professorName = professorNameCell.textContent.toLowerCase();
+                        if (professorName.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error processing professor row:', rowError);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in professor search:', error);
+            }
+        });
+    } else {
+        console.warn('Professor search input not found');
+    }
+    
+    // Course search functionality
+    const courseSearchInput = document.getElementById('courseSearchInput');
+    if (courseSearchInput) {
+        courseSearchInput.addEventListener('keyup', function() {
+            try {
+                const searchTerm = this.value.toLowerCase();
+                const courseTable = document.querySelector('#courses table tbody');
+                if (!courseTable) {
+                    console.error('Course table body not found');
+                    return;
+                }
+                
+                const rows = courseTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    try {
+                        const courseCodeCell = row.querySelector('td:nth-child(2)');
+                        const courseNameCell = row.querySelector('td:nth-child(3)');
+                        
+                        if (!courseCodeCell || !courseNameCell) {
+                            console.error('Course code or name cell not found in row', row);
+                            return;
+                        }
+                        
+                        const courseCode = courseCodeCell.textContent.toLowerCase();
+                        const courseName = courseNameCell.textContent.toLowerCase();
+                        
+                        if (courseCode.includes(searchTerm) || courseName.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    } catch (rowError) {
+                        console.error('Error processing course row:', rowError);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in course search:', error);
+            }
+        });
+    } else {
+        console.warn('Course search input not found');
+    }
+    
+    // Schedule search functionality
+    const scheduleSearchInput = document.getElementById('scheduleSearchInput');
+    if (scheduleSearchInput) {
+        scheduleSearchInput.addEventListener('keyup', function() {
+            try {
+                const searchTerm = this.value.toLowerCase();
+                const scheduleCards = document.querySelectorAll('#schedules .schedule-card');
+                
+                if (scheduleCards.length === 0) {
+                    console.error('No schedule cards found');
+                    return;
+                }
+                
+                scheduleCards.forEach(card => {
+                    try {
+                        const cardTitle = card.querySelector('.card-title');
+                        const professorInfo = card.querySelector('small');
+                        const roomInfo = card.querySelector('p:nth-child(4)');
+                        
+                        if (!cardTitle || !professorInfo || !roomInfo) {
+                            console.error('Required elements not found in schedule card', card);
+                            return;
+                        }
+                        
+                        const courseName = cardTitle.textContent.toLowerCase();
+                        const professorName = professorInfo.textContent.toLowerCase();
+                        const roomName = roomInfo.textContent.toLowerCase();
+                        
+                        if (courseName.includes(searchTerm) || 
+                            professorName.includes(searchTerm) || 
+                            roomName.includes(searchTerm)) {
+                            card.parentElement.style.display = '';
+                        } else {
+                            card.parentElement.style.display = 'none';
+                        }
+                    } catch (cardError) {
+                        console.error('Error processing schedule card:', cardError);
+                    }
+                });
+            } catch (error) {
+                console.error('Error in schedule search:', error);
+            }
+        });
+    } else {
+        console.warn('Schedule search input not found');
+    }
+    
+    // Log that search functionality has been initialized
+    console.log('Search functionality initialized');
+});
+
+// Function to perform AJAX search (for future use)
+function performAjaxSearch(type, searchTerm, callback) {
+    fetch(`search.php?type=${type}&term=${encodeURIComponent(searchTerm)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (callback && typeof callback === 'function') {
+                callback(data);
+            }
+        })
+        .catch(error => {
+            console.error('Error performing search:', error);
+        });
+}
+
+// Debug function to check if search is working
+function debugSearch() {
+    console.log('Debugging search functionality...');
+    
+    // Check if search inputs exist
+    const inputs = {
+        room: document.getElementById('roomSearchInput'),
+        professor: document.getElementById('professorSearchInput'),
+        course: document.getElementById('courseSearchInput'),
+        schedule: document.getElementById('scheduleSearchInput')
+    };
+    
+    console.log('Search inputs found:', {
+        room: !!inputs.room,
+        professor: !!inputs.professor,
+        course: !!inputs.course,
+        schedule: !!inputs.schedule
+    });
+    
+    // Check if tables/cards exist
+    const elements = {
+        roomTable: document.querySelector('#rooms table tbody'),
+        professorTable: document.querySelector('#professors table tbody'),
+        courseTable: document.querySelector('#courses table tbody'),
+        scheduleCards: document.querySelectorAll('#schedules .schedule-card')
+    };
+    
+    console.log('Search target elements found:', {
+        roomTable: !!elements.roomTable,
+        professorTable: !!elements.professorTable,
+        courseTable: !!elements.courseTable,
+        scheduleCards: elements.scheduleCards.length
+    });
+    
+    // Trigger search events manually
+    if (inputs.room) {
+        console.log('Triggering room search...');
+        inputs.room.dispatchEvent(new Event('keyup'));
+    }
+    
+    if (inputs.professor) {
+        console.log('Triggering professor search...');
+        inputs.professor.dispatchEvent(new Event('keyup'));
+    }
+    
+    if (inputs.course) {
+        console.log('Triggering course search...');
+        inputs.course.dispatchEvent(new Event('keyup'));
+    }
+    
+    if (inputs.schedule) {
+        console.log('Triggering schedule search...');
+        inputs.schedule.dispatchEvent(new Event('keyup'));
+    }
+    
+    console.log('Debug complete');
+}
+
+// Run debug on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait a bit to make sure everything is loaded
+    setTimeout(debugSearch, 1000);
 });

@@ -25,10 +25,12 @@ function getSchedules($conn) {
     $sql = "SELECT s.*, 
             p.name AS professor_name, 
             p.profile_image,
-            r.name AS room_name
+            r.name AS room_name,
+            c.course_name AS course
             FROM schedules s
             LEFT JOIN professors p ON s.professor_id = p.id
-            LEFT JOIN rooms r ON s.room_id = r.id";
+            LEFT JOIN rooms r ON s.room_id = r.id
+            LEFT JOIN courses c ON s.course_id = c.id";
             
     $result = mysqli_query($conn, $sql);
     
@@ -148,5 +150,59 @@ function checkScheduleConflict($conn, $roomId, $professorId, $day, $startTime, $
     }
 
     return ['hasConflict' => false];
+}
+
+// Search rooms by name
+function searchRooms($conn, $searchTerm) {
+    $searchTerm = "%$searchTerm%";
+    $sql = "SELECT * FROM rooms WHERE name LIKE ? ORDER BY id ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Search professors by name
+function searchProfessors($conn, $searchTerm) {
+    $searchTerm = "%$searchTerm%";
+    $sql = "SELECT * FROM professors WHERE name LIKE ? ORDER BY id ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Search courses by code or name
+function searchCourses($conn, $searchTerm) {
+    $searchTerm = "%$searchTerm%";
+    $sql = "SELECT * FROM courses WHERE course_code LIKE ? OR course_name LIKE ? ORDER BY id ASC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ss", $searchTerm, $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Search schedules by course, professor, or room
+function searchSchedules($conn, $searchTerm) {
+    $searchTerm = "%$searchTerm%";
+    $sql = "SELECT s.*, 
+            p.name AS professor_name, 
+            p.profile_image,
+            r.name AS room_name,
+            c.course_name AS course
+            FROM schedules s
+            LEFT JOIN professors p ON s.professor_id = p.id
+            LEFT JOIN rooms r ON s.room_id = r.id
+            LEFT JOIN courses c ON s.course_id = c.id
+            WHERE p.name LIKE ? OR r.name LIKE ? OR c.course_name LIKE ? OR c.course_code LIKE ?";
+            
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    return $result->fetch_all(MYSQLI_ASSOC);
 }
 ?>

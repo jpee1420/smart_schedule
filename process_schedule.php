@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = 'Schedule updated successfully!';
     } else {
         // Add new schedule
-        $sql = "INSERT INTO schedules (room_id, professor_id, course_id, start_time, end_time, day)
-                VALUES ('$course_id', $professor_id, $room_id, '$start_time', '$end_time', '$day')";
+        $sql = "INSERT INTO schedules (course_id, professor_id, room_id, start_time, end_time, day)
+                VALUES ($course_id, $professor_id, $room_id, '$start_time', '$end_time', '$day')";
         $message = 'Schedule added successfully!';
     }
     

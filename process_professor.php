@@ -41,22 +41,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Handle image upload if provided
     if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {
-        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
+        // Get file information
         $filename = $_FILES['profile_image']['name'];
-        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
-        if (!in_array($ext, $allowed)) {
-            $_SESSION['message'] = 'Invalid file type. Allowed: jpg, jpeg, png, gif';
-            $_SESSION['message_type'] = 'danger';
-            header('Location: index.php');
-            exit();
-        }
+        $file_extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $valid_extensions = array('jpg', 'jpeg', 'png', 'gif');
 
-        $new_filename = uniqid('prof_', true) . '.' . $ext;
-        $upload_path = $uploadDir . '/' . $new_filename;
-        
-        if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
-            $profile_image = $new_filename;
+        if (in_array($file_extension, $valid_extensions)) {
+            // Generate unique filename
+            $new_filename = uniqid() . '.' . $file_extension;
+            $upload_path = $uploadDir . '/' . $new_filename;
+
+            if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
+                $profile_image = $new_filename;
+            }
         }
     }
 
@@ -115,20 +112,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['message'] = 'Cannot delete professor: They have assigned schedules';
         $_SESSION['message_type'] = 'danger';
     } else {
-        // Get professor image before deleting
+        // Get professor's image before deleting
         $stmt = $conn->prepare("SELECT profile_image FROM professors WHERE id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $professor = $result->fetch_assoc();
         
-        $stmt = $conn->prepare("DELETE FROM professors WHERE id = ?");
+        // Delete the professor
+        $sql = "DELETE FROM professors WHERE id = ?";
+        $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id);
         
         if ($stmt->execute()) {
-            // Delete profile image if not default
-            if ($professor && $professor['profile_image'] !== 'placeholder.png') {
-                @unlink($uploadDir . '/' . $professor['profile_image']);
+            // Delete the professor's photo if not used by others
+            if ($professor) {
+                deleteProfessorOldPhoto($conn, $professor['profile_image'], $id);
             }
             $_SESSION['message'] = 'Professor deleted successfully!';
             $_SESSION['message_type'] = 'success';

@@ -195,4 +195,66 @@ function searchSchedules($conn, $searchTerm) {
     $result = $stmt->get_result();
     return $result->fetch_all(MYSQLI_ASSOC);
 }
+
+// Check if an image is used by other professors
+function isImageUsedByOtherProfessors($conn, $image_name, $current_professor_id = null) {
+    $sql = "SELECT COUNT(*) as count FROM professors WHERE profile_image = ?";
+    $params = array($image_name);
+    $types = "s";
+    
+    if ($current_professor_id !== null) {
+        $sql .= " AND id != ?";
+        $params[] = $current_professor_id;
+        $types .= "i";
+    }
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    
+    return $row['count'] > 0;
+}
+
+// Delete professor's old photo if not used by others
+function deleteProfessorOldPhoto($conn, $old_photo, $professor_id) {
+    // Don't delete the placeholder image
+    if ($old_photo === 'placeholder.png') {
+        return;
+    }
+    
+    // Check if the image is used by other professors
+    if (!isImageUsedByOtherProfessors($conn, $old_photo, $professor_id)) {
+        $file_path = __DIR__ . '/uploads/' . $old_photo;
+        if (file_exists($file_path)) {
+            unlink($file_path);
+        }
+    }
+}
+
+// Update professor's profile image
+function updateProfessorImage($conn, $professor_id, $new_image) {
+    // Get the old image first
+    $sql = "SELECT profile_image FROM professors WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $professor_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+    $old_image = $row['profile_image'];
+    
+    // Update to new image
+    $sql = "UPDATE professors SET profile_image = ? WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("si", $new_image, $professor_id);
+    $success = $stmt->execute();
+    
+    if ($success) {
+        // Delete old image if not used by others
+        deleteProfessorOldPhoto($conn, $old_image, $professor_id);
+    }
+    
+    return $success;
+}
 ?>

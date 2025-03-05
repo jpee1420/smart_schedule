@@ -2,6 +2,13 @@
 session_start();
 require_once 'config.php';
 require_once 'functions.php';
+
+// Verify all professor images at page load
+$fixed_count = verifyAllProfessorImages($conn);
+if ($fixed_count > 0) {
+    $_SESSION['message'] = "Fixed {$fixed_count} missing professor image(s).";
+    $_SESSION['message_type'] = 'warning';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">

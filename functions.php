@@ -257,4 +257,44 @@ function updateProfessorImage($conn, $professor_id, $new_image) {
     
     return $success;
 }
+
+// Check if professor image exists and fix if missing
+function verifyAndFixProfessorImage($conn, $professor_id) {
+    // Get professor's current image
+    $sql = "SELECT profile_image FROM professors WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $professor_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $professor = $result->fetch_assoc();
+    
+    if ($professor && $professor['profile_image'] !== 'placeholder.png') {
+        $image_path = __DIR__ . '/uploads/' . $professor['profile_image'];
+        
+        // If image doesn't exist, update to placeholder
+        if (!file_exists($image_path)) {
+            $sql = "UPDATE professors SET profile_image = 'placeholder.png' WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $professor_id);
+            $stmt->execute();
+            return true; // Image was fixed
+        }
+    }
+    return false; // No fix needed
+}
+
+// Verify all professor images
+function verifyAllProfessorImages($conn) {
+    $sql = "SELECT id, profile_image FROM professors WHERE profile_image != 'placeholder.png'";
+    $result = $conn->query($sql);
+    $fixed_count = 0;
+    
+    while ($row = $result->fetch_assoc()) {
+        if (verifyAndFixProfessorImage($conn, $row['id'])) {
+            $fixed_count++;
+        }
+    }
+    
+    return $fixed_count;
+}
 ?>

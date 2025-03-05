@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
+require_once 'functions.php';
 
 // Create uploads directory if it doesn't exist
 $uploadDir = 'uploads';
@@ -13,6 +14,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action']) && $_POST['action'] === 'updateStatus') {
         header('Content-Type: application/json');
         $professorId = isset($_POST['id']) ? intval($_POST['id']) : 0;
+        
+        // Verify professor image exists before updating status
+        verifyAndFixProfessorImage($conn, $professorId);
+        
         $status = isset($_POST['status']) ? $_POST['status'] : '';
         
         $validStatuses = ['Present', 'Absent', 'On Leave'];
@@ -47,8 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $valid_extensions = array('jpg', 'jpeg', 'png', 'gif');
 
         if (in_array($file_extension, $valid_extensions)) {
-            // Generate unique filename
-            $new_filename = uniqid() . '.' . $file_extension;
+            // Format professor name for filename (remove spaces and special characters)
+            $formatted_name = strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name));
+            
+            // Generate filename with professor name and timestamp to ensure uniqueness
+            $new_filename = 'prof_' . $formatted_name . '_' . time() . '.' . $file_extension;
             $upload_path = $uploadDir . '/' . $new_filename;
 
             if (move_uploaded_file($_FILES['profile_image']['tmp_name'], $upload_path)) {
@@ -61,12 +69,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update existing professor
         $id = (int)$_POST['id'];
         
-        // Get current profile image
+        // Get current profile image and verify it exists
         $stmt = $conn->prepare("SELECT profile_image FROM professors WHERE id = ?");
         $stmt->bind_param("i", $id);
         $stmt->execute();
         $result = $stmt->get_result();
         $current_prof = $result->fetch_assoc();
+        
+        // Verify the current image exists
+        verifyAndFixProfessorImage($conn, $id);
         
         // Only update image if new one was uploaded
         if (isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] === 0) {

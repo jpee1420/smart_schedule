@@ -87,7 +87,8 @@ function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time
             JOIN rooms r ON s.room_id = r.id
             JOIN courses c ON s.course_id = c.id
             WHERE (
-                (s.start_time <= ? AND s.end_time >= ?)
+                (s.start_time < ? AND s.end_time > ?)
+                OR (? < s.end_time AND ? > s.start_time)
                 AND s.day = ?
             )";
     
@@ -106,9 +107,9 @@ function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time
     $stmt = $conn->prepare($professor_sql);
     
     if ($schedule_id) {
-        $stmt->bind_param("ssssi", $end_time, $start_time, $day, $schedule_id, $professor_id);
+        $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $professor_id);
     } else {
-        $stmt->bind_param("sssi", $end_time, $start_time, $day, $professor_id);
+        $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $professor_id);
     }
     
     $stmt->execute();
@@ -125,9 +126,9 @@ function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time
     $stmt = $conn->prepare($room_sql);
     
     if ($schedule_id) {
-        $stmt->bind_param("ssssi", $end_time, $start_time, $day, $schedule_id, $room_id);
+        $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $room_id);
     } else {
-        $stmt->bind_param("sssi", $end_time, $start_time, $day, $room_id);
+        $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $room_id);
     }
     
     $stmt->execute();

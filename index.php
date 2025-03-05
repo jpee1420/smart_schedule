@@ -9,7 +9,8 @@ require_once 'functions.php';
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule Management System</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
@@ -147,7 +148,15 @@ require_once 'functions.php';
                     <!-- Rooms Tab -->
                     <div class="tab-pane fade" id="rooms">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2>Room Management</h2>
+                            <div class="d-flex align-items-center">
+                                <h2>Room Management</h2>
+                                <button class="view-toggle active" data-view="list" data-target="rooms">
+                                    <i class="fas fa-list"></i> List
+                                </button>
+                                <button class="view-toggle" data-view="grid" data-target="rooms">
+                                    <i class="fas fa-th"></i> Grid
+                                </button>
+                            </div>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomModal">
                                 <i class="fas fa-plus"></i> Add Room
                             </button>
@@ -162,35 +171,59 @@ require_once 'functions.php';
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Room Name</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            $rooms = getAllRooms($conn);
-                                            foreach ($rooms as $room):
-                                            ?>
-                                            <tr>
-                                                <td><?php echo $room['id']; ?></td>
-                                                <td><?php echo $room['name']; ?></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary" onclick="editRoom(<?php echo $room['id']; ?>, '<?php echo $room['name']; ?>')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteRoom(<?php echo $room['id']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
+                                <!-- List View -->
+                                <div class="list-view">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Room Name</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $rooms = getAllRooms($conn);
+                                                foreach ($rooms as $room):
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo $room['id']; ?></td>
+                                                    <td><?php echo $room['name']; ?></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary" onclick="editRoom(<?php echo $room['id']; ?>, '<?php echo $room['name']; ?>')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteRoom(<?php echo $room['id']; ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Grid View -->
+                                <div class="grid-view" style="display: none;">
+                                    <?php foreach ($rooms as $room): ?>
+                                    <div class="grid-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0"><?php echo $room['name']; ?></h5>
+                                            <div class="btn-group">
+                                                <button class="btn btn-sm btn-primary" onclick="editRoom(<?php echo $room['id']; ?>, '<?php echo $room['name']; ?>')">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="deleteRoom(<?php echo $room['id']; ?>)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="text-muted mt-2">
+                                            <small>Room ID: <?php echo $room['id']; ?></small>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </div>
@@ -199,7 +232,15 @@ require_once 'functions.php';
                     <!-- Professors Tab -->
                     <div class="tab-pane fade" id="professors">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2>Professor Management</h2>
+                            <div class="d-flex align-items-center">
+                                <h2>Professor Management</h2>
+                                <button class="view-toggle active" data-view="list" data-target="professors">
+                                    <i class="fas fa-list"></i> List
+                                </button>
+                                <button class="view-toggle" data-view="grid" data-target="professors">
+                                    <i class="fas fa-th"></i> Grid
+                                </button>
+                            </div>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProfessorModal">
                                 <i class="fas fa-plus"></i> Add Professor
                             </button>
@@ -214,43 +255,69 @@ require_once 'functions.php';
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Image</th>
-                                                <th>Name</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            $professors = getAllProfessors($conn);
-                                            foreach ($professors as $professor):
-                                            ?>
-                                            <tr>
-                                                <td><?php echo $professor['id']; ?></td>
-                                                <td>
-                                                    <img src="<?php 
-                                                        echo !empty($professor['profile_image']) && $professor['profile_image'] !== 'placeholder.png'
-                                                            ? 'uploads/' . htmlspecialchars($professor['profile_image']) 
-                                                            : 'uploads/placeholder.png'; 
-                                                    ?>" class="professor-profile-image" alt="<?php echo htmlspecialchars($professor['name']); ?>">
-                                                </td>
-                                                <td><?php echo $professor['name']; ?></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary me-2" onclick="editProfessor(<?php echo $professor['id']; ?>, '<?php echo $professor['name']; ?>', '<?php echo $professor['profile_image']; ?>')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteProfessor(<?php echo $professor['id']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
+                                <!-- List View -->
+                                <div class="list-view">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Image</th>
+                                                    <th>Name</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $professors = getAllProfessors($conn);
+                                                foreach ($professors as $professor):
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo $professor['id']; ?></td>
+                                                    <td>
+                                                        <img src="<?php 
+                                                            echo !empty($professor['profile_image']) && $professor['profile_image'] !== 'placeholder.png'
+                                                                ? 'uploads/' . htmlspecialchars($professor['profile_image']) 
+                                                                : 'uploads/placeholder.png'; 
+                                                        ?>" class="professor-profile-image" alt="<?php echo htmlspecialchars($professor['name']); ?>">
+                                                    </td>
+                                                    <td><?php echo $professor['name']; ?></td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary me-2" onclick="editProfessor(<?php echo $professor['id']; ?>, '<?php echo $professor['name']; ?>', '<?php echo $professor['profile_image']; ?>')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteProfessor(<?php echo $professor['id']; ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Grid View -->
+                                <div class="grid-view" style="display: none;">
+                                    <?php foreach ($professors as $professor): ?>
+                                    <div class="grid-item">
+                                        <div class="text-center mb-3">
+                                            <img src="<?php 
+                                                echo !empty($professor['profile_image']) && $professor['profile_image'] !== 'placeholder.png'
+                                                    ? 'uploads/' . htmlspecialchars($professor['profile_image']) 
+                                                    : 'uploads/placeholder.png'; 
+                                            ?>" class="professor-profile-image" alt="<?php echo htmlspecialchars($professor['name']); ?>">
+                                        </div>
+                                        <h5 class="text-center mb-3"><?php echo $professor['name']; ?></h5>
+                                        <div class="d-flex justify-content-center">
+                                            <button class="btn btn-sm btn-primary me-2" onclick="editProfessor(<?php echo $professor['id']; ?>, '<?php echo $professor['name']; ?>', '<?php echo $professor['profile_image']; ?>')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteProfessor(<?php echo $professor['id']; ?>)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </div>
@@ -259,7 +326,15 @@ require_once 'functions.php';
                     <!-- Courses Tab -->
                     <div class="tab-pane fade" id="courses">
                         <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2>Course Management</h2>
+                            <div class="d-flex align-items-center">
+                                <h2>Course Management</h2>
+                                <button class="view-toggle active" data-view="list" data-target="courses">
+                                    <i class="fas fa-list"></i> List
+                                </button>
+                                <button class="view-toggle" data-view="grid" data-target="courses">
+                                    <i class="fas fa-th"></i> Grid
+                                </button>
+                            </div>
                             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCourseModal">
                                 <i class="fas fa-plus"></i> Add Course
                             </button>
@@ -274,43 +349,68 @@ require_once 'functions.php';
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>Course Code</th>
-                                                <th>Course Name</th>
-                                                <th>Type</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php
-                                            $courses = getAllCourses($conn);
-                                            foreach ($courses as $course):
-                                            ?>
-                                            <tr>
-                                                <td><?php echo $course['id']; ?></td>
-                                                <td><?php echo $course['course_code']; ?></td>
-                                                <td><?php echo $course['course_name']; ?></td>
-                                                <td>
-                                                    <span class="badge bg-<?php echo $course['lab'] ? 'info' : 'primary'; ?>">
-                                                        <?php echo $course['lab'] ? 'Laboratory' : 'Lecture'; ?>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-primary me-2" onclick="editCourse(<?php echo $course['id']; ?>, '<?php echo $course['course_code']; ?>', '<?php echo $course['course_name']; ?>')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
+                                <!-- List View -->
+                                <div class="list-view">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID</th>
+                                                    <th>Course Code</th>
+                                                    <th>Course Name</th>
+                                                    <th>Type</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                $courses = getAllCourses($conn);
+                                                foreach ($courses as $course):
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo $course['id']; ?></td>
+                                                    <td><?php echo $course['course_code']; ?></td>
+                                                    <td><?php echo $course['course_name']; ?></td>
+                                                    <td>
+                                                        <span class="badge bg-<?php echo $course['lab'] ? 'info' : 'primary'; ?>">
+                                                            <?php echo $course['lab'] ? 'Laboratory' : 'Lecture'; ?>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary me-2" onclick="editCourse(<?php echo $course['id']; ?>, '<?php echo $course['course_code']; ?>', '<?php echo $course['course_name']; ?>')">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Grid View -->
+                                <div class="grid-view" style="display: none;">
+                                    <?php foreach ($courses as $course): ?>
+                                    <div class="grid-item">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="mb-0"><?php echo $course['course_code']; ?></h5>
+                                            <span class="badge bg-<?php echo $course['lab'] ? 'info' : 'primary'; ?>">
+                                                <?php echo $course['lab'] ? 'Laboratory' : 'Lecture'; ?>
+                                            </span>
+                                        </div>
+                                        <p class="mb-3"><?php echo $course['course_name']; ?></p>
+                                        <div class="d-flex justify-content-end">
+                                            <button class="btn btn-sm btn-primary me-2" onclick="editCourse(<?php echo $course['id']; ?>, '<?php echo $course['course_code']; ?>', '<?php echo $course['course_name']; ?>')">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteCourse(<?php echo $course['id']; ?>)">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <?php endforeach; ?>
                                 </div>
                             </div>
                         </div>
@@ -361,8 +461,9 @@ require_once 'functions.php';
         <?php include 'modals/course_modal.php'; ?>
         <?php include 'modals/confirm_delete_modal.php'; ?>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/script.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="scripts/script.js"></script>
     <script>
         // Auto-dismiss alerts
         document.addEventListener('DOMContentLoaded', function() {

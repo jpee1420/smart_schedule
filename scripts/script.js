@@ -473,3 +473,93 @@ document.addEventListener('DOMContentLoaded', function() {
     // Wait a bit to make sure everything is loaded
     setTimeout(debugSearch, 1000);
 });
+
+// View toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const viewToggles = document.querySelectorAll('.view-toggle');
+    
+    viewToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const view = this.getAttribute('data-view');
+            const target = this.getAttribute('data-target');
+            const container = document.querySelector(`#${target} .card-body`);
+            
+            // Update toggle button states
+            const toggles = document.querySelectorAll(`[data-target="${target}"]`);
+            toggles.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Update view
+            if (container) {
+                const listView = container.querySelector('.list-view');
+                const gridView = container.querySelector('.grid-view');
+                
+                if (view === 'list') {
+                    listView.style.display = 'block';
+                    gridView.style.display = 'none';
+                } else {
+                    listView.style.display = 'none';
+                    gridView.style.display = 'grid';
+                }
+            }
+            
+            // Save preference to localStorage
+            localStorage.setItem(`${target}_view`, view);
+        });
+    });
+    
+    // Restore view preferences
+    ['rooms', 'professors', 'courses'].forEach(section => {
+        const savedView = localStorage.getItem(`${section}_view`);
+        if (savedView) {
+            const toggle = document.querySelector(`.view-toggle[data-view="${savedView}"][data-target="${section}"]`);
+            if (toggle) {
+                toggle.click();
+            }
+        }
+    });
+});
+
+// Extend search functionality to work with both views
+function performSearch(searchInput, targetId) {
+    const searchTerm = searchInput.value.toLowerCase();
+    const container = document.querySelector(`#${targetId} .card-body`);
+    const isGridView = container.querySelector('.grid-view').style.display === 'grid';
+    
+    if (isGridView) {
+        const items = container.querySelectorAll('.grid-item');
+        items.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            item.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    } else {
+        const rows = container.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(searchTerm) ? '' : 'none';
+        });
+    }
+}
+
+// Update existing search event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing DOMContentLoaded code ...
+    
+    // Room search
+    const roomSearchInput = document.getElementById('roomSearchInput');
+    if (roomSearchInput) {
+        roomSearchInput.addEventListener('keyup', () => performSearch(roomSearchInput, 'rooms'));
+    }
+    
+    // Professor search
+    const professorSearchInput = document.getElementById('professorSearchInput');
+    if (professorSearchInput) {
+        professorSearchInput.addEventListener('keyup', () => performSearch(professorSearchInput, 'professors'));
+    }
+    
+    // Course search
+    const courseSearchInput = document.getElementById('courseSearchInput');
+    if (courseSearchInput) {
+        courseSearchInput.addEventListener('keyup', () => performSearch(courseSearchInput, 'courses'));
+    }
+});

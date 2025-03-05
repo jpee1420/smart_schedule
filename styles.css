@@ -109,3 +109,71 @@
 .highlight {
     background-color: rgba(255, 255, 0, 0.3);
 }
+
+/* Grid/List View Styles */
+.view-toggle {
+    margin-left: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
+}
+
+.view-toggle i {
+    margin-right: 5px;
+}
+
+.view-toggle:hover {
+    background-color: #e9ecef;
+}
+
+/* Grid View */
+.grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.grid-view .grid-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    transition: transform 0.2s;
+}
+
+.grid-view .grid-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* List View */
+.list-view .table {
+    margin-bottom: 0;
+}
+
+/* Hide/Show elements based on view */
+.grid-view .list-only {
+    display: none;
+}
+
+.list-view .grid-only {
+    display: none;
+}
+
+.list-view .table-responsive {
+    display: block;
+}
+
+.grid-view .table-responsive {
+    display: none;
+}
+
+/* Active toggle button state */
+.view-toggle.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}

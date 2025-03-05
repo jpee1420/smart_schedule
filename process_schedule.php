@@ -12,7 +12,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $end_time = $conn->real_escape_string($_POST['end_time']);
     $day = $conn->real_escape_string($_POST['day']);
 
-    // Check for duplicate schedule
+    // Check for schedule conflicts
+    $schedule_id = isset($_POST['id']) ? (int)$_POST['id'] : null;
+    $conflicts = checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time, $end_time, $schedule_id);
+
+    if (!empty($conflicts)) {
+        $_SESSION['message'] = "Schedule conflicts found:<br>" . implode("<br>", $conflicts);
+        $_SESSION['message_type'] = 'danger';
+        header('Location: index.php');
+        exit();
+    }
+
+    // Check for exact duplicate schedule
     $check_sql = "SELECT COUNT(*) as count FROM schedules 
                   WHERE professor_id = $professor_id 
                   AND room_id = $room_id 
@@ -29,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $row = $result->fetch_assoc();
     
     if ($row['count'] > 0) {
-        $_SESSION['message'] = 'This schedule already exists!';
+        $_SESSION['message'] = 'This exact schedule already exists!';
         $_SESSION['message_type'] = 'danger';
         header('Location: index.php');
         exit();
@@ -39,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Update existing schedule
         $id = (int)$_POST['id'];
         $sql = "UPDATE schedules SET 
-                course_id = '$course_id',
+                course_id = $course_id,
                 professor_id = $professor_id,
                 room_id = $room_id,
                 start_time = '$start_time',

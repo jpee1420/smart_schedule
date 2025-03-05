@@ -72,84 +72,74 @@ function updateProfessorStatus($conn, $professorId, $status) {
     return $stmt->execute();
 }
 
-function checkScheduleConflict($conn, $roomId, $professorId, $day, $startTime, $endTime, $excludeId = null) {
-    // Validate inputs
-    if (!$roomId || !$professorId || !$day || !$startTime || !$endTime) {
-        return [
-            'hasConflict' => true,
-            'message' => 'All fields are required'
-        ];
-    }
-
-    // Check for overlapping schedules
-    $sql = "SELECT s.*, r.name as room_name, p.name as professor_name 
+function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time, $end_time, $schedule_id = null) {
+    $conflicts = array();
+    
+    // Base SQL for checking time overlap
+    $sql = "SELECT s.*, 
+            p.name as professor_name, 
+            r.name as room_name,
+            c.course_name,
+            TIME_FORMAT(s.start_time, '%h:%i %p') as formatted_start_time,
+            TIME_FORMAT(s.end_time, '%h:%i %p') as formatted_end_time
             FROM schedules s
-            JOIN rooms r ON s.room_id = r.id
             JOIN professors p ON s.professor_id = p.id
-            WHERE (s.room_id = ? OR s.professor_id = ?)
-            AND s.day = ?
-            AND (
-                (s.start_time <= ? AND s.end_time > ?) OR
-                (s.start_time < ? AND s.end_time >= ?) OR
-                (s.start_time >= ? AND s.end_time <= ?)
+            JOIN rooms r ON s.room_id = r.id
+            JOIN courses c ON s.course_id = c.id
+            WHERE (
+                (s.start_time <= ? AND s.end_time >= ?)
+                AND s.day = ?
             )";
-
-    // Add exclusion for edit mode
-    if ($excludeId) {
+    
+    if ($schedule_id) {
         $sql .= " AND s.id != ?";
     }
 
+    // Prepare the base statement
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
-        return [
-            'hasConflict' => true,
-            'message' => 'Database error: ' . $conn->error
-        ];
+        return ["Database error: " . $conn->error];
     }
 
-    // Bind parameters
-    if ($excludeId) {
-        $stmt->bind_param("iissssssi", 
-            $roomId, $professorId, $day, 
-            $endTime, $startTime, 
-            $startTime, $endTime,
-            $startTime, $endTime,
-            $excludeId
-        );
+    // Check professor conflicts
+    $professor_sql = $sql . " AND s.professor_id = ?";
+    $stmt = $conn->prepare($professor_sql);
+    
+    if ($schedule_id) {
+        $stmt->bind_param("ssssi", $end_time, $start_time, $day, $schedule_id, $professor_id);
     } else {
-        $stmt->bind_param("iissssss", 
-            $roomId, $professorId, $day, 
-            $endTime, $startTime, 
-            $startTime, $endTime,
-            $startTime, $endTime
-        );
+        $stmt->bind_param("sssi", $end_time, $start_time, $day, $professor_id);
     }
-
-    // Execute query
-    if (!$stmt->execute()) {
-        return [
-            'hasConflict' => true,
-            'message' => 'Error checking conflicts: ' . $stmt->error
-        ];
-    }
-
+    
+    $stmt->execute();
     $result = $stmt->get_result();
-    if ($result->num_rows > 0) {
-        $conflict = $result->fetch_assoc();
-        return [
-            'hasConflict' => true,
-            'message' => sprintf(
-                "Schedule conflicts with %s in %s on %s from %s to %s",
-                $conflict['professor_name'],
-                $conflict['room_name'],
-                $conflict['day'],
-                date('h:i A', strtotime($conflict['start_time'])),
-                date('h:i A', strtotime($conflict['end_time']))
-            )
-        ];
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $conflicts[] = "Professor {$row['professor_name']} already has a class ({$row['course_name']}) scheduled on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+        }
     }
 
-    return ['hasConflict' => false];
+    // Check room conflicts
+    $room_sql = $sql . " AND s.room_id = ?";
+    $stmt = $conn->prepare($room_sql);
+    
+    if ($schedule_id) {
+        $stmt->bind_param("ssssi", $end_time, $start_time, $day, $schedule_id, $room_id);
+    } else {
+        $stmt->bind_param("sssi", $end_time, $start_time, $day, $room_id);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $conflicts[] = "Room {$row['room_name']} is already booked for {$row['course_name']} with Prof. {$row['professor_name']} on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+        }
+    }
+
+    return $conflicts;
 }
 
 // Search rooms by name

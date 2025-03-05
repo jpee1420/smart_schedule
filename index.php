@@ -60,9 +60,14 @@ require_once 'functions.php';
                     <div class="tab-pane fade show active" id="schedules">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h2>Class Schedules</h2>
-                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
-                                <i class="fas fa-plus"></i> Add Schedule
-                            </button>
+                            <div>
+                                <a href="view_schedules.php" class="btn btn-info me-2">
+                                    <i class="fas fa-tv"></i> View Slideshow
+                                </a>
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                                    <i class="fas fa-plus"></i> Add Schedule
+                                </button>
+                            </div>
                         </div>
                         <!-- Add search bar for schedules -->
                         <div class="mb-3">

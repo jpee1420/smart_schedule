@@ -164,7 +164,7 @@ function searchProfessors($conn, $searchTerm) {
     $result = $stmt->get_result();
     return $result->fetch_all(MYSQLI_ASSOC);
 }
-
+//
 // Search courses by code or name
 function searchCourses($conn, $searchTerm) {
     $searchTerm = "%$searchTerm%";

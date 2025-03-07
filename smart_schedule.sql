@@ -193,7 +193,7 @@ ALTER TABLE `rooms`
 --
 ALTER TABLE `schedules`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `course_id` (`course_id`),
+  ADD KEY `course_id` (`course_id`),
   ADD KEY `room_id` (`room_id`),
   ADD KEY `professor_id` (`professor_id`);
 

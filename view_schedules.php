@@ -44,6 +44,9 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
     error_log("Current Time: " . $currentTime);
     error_log("Current Day Format: " . $currentDayFormat);
 
+    // Calculate time 5 minutes from now
+    $fiveMinutesFromNow = date('H:i:s', strtotime($currentTime . ' + 5 minutes'));
+
     $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
             r.name as room_name, c.course_name as course 
             FROM schedules s 
@@ -51,20 +54,25 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
             JOIN rooms r ON s.room_id = r.id 
             JOIN courses c ON s.course_id = c.id 
             WHERE s.day = ? 
-            AND s.start_time <= ? 
-            AND s.end_time >= ?
+            AND (
+                -- Current classes
+                (s.start_time <= ? AND s.end_time >= ?)
+                OR
+                -- Classes starting within next 5 minutes
+                (s.start_time > ? AND s.start_time <= ?)
+            )
             ORDER BY s.start_time ASC";
             
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sss", $currentDayFormat, $currentTime, $currentTime);
+    $stmt->bind_param("sssss", $currentDayFormat, $currentTime, $currentTime, $currentTime, $fiveMinutesFromNow);
     $stmt->execute();
     $result = $stmt->get_result();
     
     // Debug information
-    error_log("Current schedules found: " . $result->num_rows);
+    error_log("Current and starting soon schedules found: " . $result->num_rows);
     
     if($result->num_rows === 0) {
-        // If no current schedule, get the next upcoming schedule
+        // If no current or starting soon schedule, get the next upcoming schedule
         $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
                 r.name as room_name, c.course_name as course 
                 FROM schedules s 
@@ -77,7 +85,7 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
                 LIMIT 4";
                 
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ss", $currentDayFormat, $currentTime);
+        $stmt->bind_param("ss", $currentDayFormat, $fiveMinutesFromNow);
         $stmt->execute();
         $result = $stmt->get_result();
         
@@ -185,11 +193,42 @@ if (empty($schedules)) {
             font-size: 1.5rem;
             color: #6c757d;
         }
+        /* Add new styles for schedule status */
+        .schedule-card.inactive {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .schedule-status {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .card-body {
+            position: relative;
+            padding-bottom: 40px; /* Make space for the status badge */
+        }
+        .status-current {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-upcoming {
+            background-color: #ffc107;
+            color: black;
+        }
+        .status-ended {
+            background-color: #dc3545;
+            color: white;
+        }
     </style>
 </head>
 <body>
-    <div class="current-time">
-        <?php echo date('l, h:i A'); ?>
+    <div class="current-time" id="currentTime">
+        <?php echo date('l, h:i:s A'); ?>
     </div>
     
     <a href="index.php" class="btn btn-primary back-button">
@@ -225,8 +264,11 @@ if (empty($schedules)) {
                 <div class="carousel-item <?php echo $index === 0 ? 'active' : ''; ?>">
                     <div class="schedule-slide">
                         <?php foreach ($chunk as $schedule): ?>
-                        <div class="card schedule-card">
+                        <div class="card schedule-card" 
+                             data-start="<?php echo $schedule['start_time']; ?>" 
+                             data-end="<?php echo $schedule['end_time']; ?>">
                             <div class="card-body">
+                                <div class="schedule-status"></div>
                                 <div class="d-flex align-items-center mb-3">
                                     <img src="<?php 
                                         echo !empty($schedule['profile_image']) && $schedule['profile_image'] !== 'placeholder.png'
@@ -289,18 +331,84 @@ if (empty($schedules)) {
 
     <script src="js/bootstrap.bundle.min.js"></script>
     <script>
-        // Update current time every second
-        function updateCurrentTime() {
-            const timeDisplay = document.querySelector('.current-time');
-            setInterval(() => {
-                const now = new Date();
-                const options = { weekday: 'long', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true };
-                timeDisplay.textContent = now.toLocaleString('en-US', options);
-            }, 1000);
+        // Function to update current time
+        function updateTime() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long',
+                hour: 'numeric',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true 
+            };
+            document.getElementById('currentTime').textContent = now.toLocaleString('en-US', options);
         }
 
-        // Initialize time display
-        updateCurrentTime();
+        // Function to check schedule status
+        function updateScheduleStatuses() {
+            const now = new Date();
+            const currentTime = now.getHours().toString().padStart(2, '0') + ':' + 
+                              now.getMinutes().toString().padStart(2, '0') + ':' + 
+                              now.getSeconds().toString().padStart(2, '0');
+
+            document.querySelectorAll('.schedule-card').forEach(card => {
+                const startTime = card.dataset.start;
+                const endTime = card.dataset.end;
+                const statusElement = card.querySelector('.schedule-status');
+
+                // Calculate time 5 minutes before start
+                const startDate = new Date();
+                const [startHours, startMinutes] = startTime.split(':');
+                startDate.setHours(parseInt(startHours), parseInt(startMinutes), 0);
+                
+                const fiveMinutesBefore = new Date(startDate.getTime() - 5 * 60000);
+                const currentDate = new Date();
+                currentDate.setSeconds(0); // Ignore seconds for this comparison
+                
+                // Convert to comparable format for the main time check
+                if (currentDate >= fiveMinutesBefore && currentTime < startTime) {
+                    // Within 5 minutes before start time
+                    statusElement.textContent = 'Starting Soon';
+                    statusElement.className = 'schedule-status status-upcoming';
+                    card.classList.remove('inactive');
+                } else if (currentTime < startTime) {
+                    // More than 5 minutes before start
+                    statusElement.textContent = 'Upcoming';
+                    statusElement.className = 'schedule-status status-upcoming';
+                    card.classList.remove('inactive');
+                } else if (currentTime >= startTime && currentTime <= endTime) {
+                    statusElement.textContent = 'Current';
+                    statusElement.className = 'schedule-status status-current';
+                    card.classList.remove('inactive');
+                } else {
+                    statusElement.textContent = 'Ended';
+                    statusElement.className = 'schedule-status status-ended';
+                    card.classList.add('inactive');
+                }
+            });
+
+            // Check if all schedules in the current slide are inactive
+            const carousel = document.getElementById('scheduleCarousel');
+            const activeSlide = carousel.querySelector('.carousel-item.active');
+            if (activeSlide) {
+                const activeCards = activeSlide.querySelectorAll('.schedule-card:not(.inactive)');
+                if (activeCards.length === 0) {
+                    // All schedules in current slide are inactive, move to next slide
+                    const carouselInstance = bootstrap.Carousel.getInstance(carousel);
+                    carouselInstance.next();
+                }
+            }
+        }
+
+        // Update time and schedule statuses every second
+        setInterval(() => {
+            updateTime();
+            updateScheduleStatuses();
+        }, 1000);
+
+        // Initial update
+        updateTime();
+        updateScheduleStatuses();
 
         function toggleFullscreen() {
             const container = document.querySelector('.carousel-container');

@@ -87,8 +87,8 @@ function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time
             JOIN rooms r ON s.room_id = r.id
             JOIN courses c ON s.course_id = c.id
             WHERE (
-                (s.start_time < ? AND s.end_time > ?)
-                OR (? < s.end_time AND ? > s.start_time)
+                ((s.start_time < ? AND s.end_time > ?)
+                OR (? < s.end_time AND ? > s.start_time))
                 AND s.day = ?
             )";
     

@@ -120,7 +120,8 @@ if (empty($schedules)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Current Schedules - Schedule Management System</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="css/all.min.css" rel="stylesheet"> 
+    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
     <link href="styles.css" rel="stylesheet">
     <!-- Add meta refresh every minute -->
     <meta http-equiv="refresh" content="60">

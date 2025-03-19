@@ -75,6 +75,32 @@ function updateProfessorStatus($conn, $professorId, $status) {
 function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time, $end_time, $schedule_id = null) {
     $conflicts = array();
     
+    // Check if current professor is TBA
+    $is_professor_tba = false;
+    if ($professor_id) {
+        $prof_sql = "SELECT name FROM professors WHERE id = ?";
+        $prof_stmt = $conn->prepare($prof_sql);
+        $prof_stmt->bind_param("i", $professor_id);
+        $prof_stmt->execute();
+        $prof_result = $prof_stmt->get_result();
+        if ($prof_row = $prof_result->fetch_assoc()) {
+            $is_professor_tba = (strtoupper(trim($prof_row['name'])) === 'TBA');
+        }
+    }
+    
+    // Check if current room is TBA
+    $is_room_tba = false;
+    if ($room_id) {
+        $room_sql = "SELECT name FROM rooms WHERE id = ?";
+        $room_stmt = $conn->prepare($room_sql);
+        $room_stmt->bind_param("i", $room_id);
+        $room_stmt->execute();
+        $room_result = $room_stmt->get_result();
+        if ($room_row = $room_result->fetch_assoc()) {
+            $is_room_tba = (strtoupper(trim($room_row['name'])) === 'TBA');
+        }
+    }
+    
     // Base SQL for checking time overlap
     $sql = "SELECT s.*, 
             p.name as professor_name, 
@@ -102,41 +128,45 @@ function checkScheduleConflict($conn, $professor_id, $room_id, $day, $start_time
         return ["Database error: " . $conn->error];
     }
 
-    // Check professor conflicts
-    $professor_sql = $sql . " AND s.professor_id = ?";
-    $stmt = $conn->prepare($professor_sql);
-    
-    if ($schedule_id) {
-        $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $professor_id);
-    } else {
-        $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $professor_id);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $conflicts[] = "Professor {$row['professor_name']} already has a class ({$row['course_name']}) scheduled on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+    // Check professor conflicts if not TBA
+    if (!$is_professor_tba) {
+        $professor_sql = $sql . " AND s.professor_id = ? AND UPPER(p.name) != 'TBA'";
+        $stmt = $conn->prepare($professor_sql);
+        
+        if ($schedule_id) {
+            $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $professor_id);
+        } else {
+            $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $professor_id);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $conflicts[] = "Professor {$row['professor_name']} already has a class ({$row['course_name']}) scheduled on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+            }
         }
     }
 
-    // Check room conflicts
-    $room_sql = $sql . " AND s.room_id = ?";
-    $stmt = $conn->prepare($room_sql);
-    
-    if ($schedule_id) {
-        $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $room_id);
-    } else {
-        $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $room_id);
-    }
-    
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $conflicts[] = "Room {$row['room_name']} is already booked for {$row['course_name']} with Prof. {$row['professor_name']} on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+    // Check room conflicts if not TBA
+    if (!$is_room_tba) {
+        $room_sql = $sql . " AND s.room_id = ? AND UPPER(r.name) != 'TBA'";
+        $stmt = $conn->prepare($room_sql);
+        
+        if ($schedule_id) {
+            $stmt->bind_param("sssssii", $end_time, $start_time, $start_time, $end_time, $day, $schedule_id, $room_id);
+        } else {
+            $stmt->bind_param("sssssi", $end_time, $start_time, $start_time, $end_time, $day, $room_id);
+        }
+        
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            while ($row = $result->fetch_assoc()) {
+                $conflicts[] = "Room {$row['room_name']} is already booked for {$row['course_name']} with Prof. {$row['professor_name']} on {$day} from {$row['formatted_start_time']} to {$row['formatted_end_time']}";
+            }
         }
     }
 

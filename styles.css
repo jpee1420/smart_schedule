@@ -13,10 +13,37 @@
 
 .schedule-card {
     transition: transform 0.2s;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .schedule-card:hover {
     transform: translateY(-5px);
+}
+
+.schedule-card .card-body {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.schedule-card .card-title {
+    min-height: 2.5rem;
+    overflow: visible;
+    white-space: normal;
+    word-wrap: break-word;
+    font-size: 0.95rem;
+    /* text-align: justify; */
+}
+
+.card-text {
+    font-size: 0.9rem;
+}
+
+.schedule-card-container {
+    height: 100%;
+    margin-bottom: 1rem;
 }
 
 .professor-image {
@@ -37,6 +64,8 @@
     border-radius: 8px;
     padding: 10px;
 }
+
+
 
 .professor-image-small {
     width: 40px;

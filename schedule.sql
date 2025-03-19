@@ -42,8 +42,8 @@ CREATE TABLE IF NOT EXISTS `schedules` (
 );
 
 INSERT INTO `courses` (`course_code`, `course_name`, `lab`) VALUES
-  ('CCS112', 'Logic Design and Digital Computing', 0),
   ('CCS111', 'Introduction to Computing', 0),
+  ('CCS112', 'Logic Design and Digital Computing', 0),
   ('CCS121L', 'Fundamentals of Problem Solving and Computing', 1),
   ('CCS122', 'Computer Organization', 0),
   ('CCS123', 'PC Troubleshooting and Maintenance', 0),

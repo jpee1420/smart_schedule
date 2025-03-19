@@ -92,7 +92,7 @@ if ($fixed_count > 0) {
                                     $schedules = getSchedules($conn);
                                     foreach ($schedules as $schedule):
                                     ?>
-                                    <div class="col-md-4 mb-4">
+                                    <div class="col-md-4 schedule-card-container">
                                         <div class="card schedule-card">
                                             <div class="card-body">
                                                 <div class="d-flex align-items-center mb-3">
@@ -119,7 +119,7 @@ if ($fixed_count > 0) {
                                                     <i class="fas fa-door-open me-2"></i>
                                                     Room <?php echo htmlspecialchars($schedule['room_name']); ?>
                                                 </p>
-                                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                                <div class="d-flex justify-content-between align-items-center mt-auto">
                                                     <?php
                                                     $badgeClass = 'success';
                                                     if ($schedule['professor_status'] === 'Absent') {

@@ -221,6 +221,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Filter functionality for schedules
+    // initializeScheduleFilters(); // Removed - now handled by filter.js
+    
     // Room search functionality
     const roomSearchInput = document.getElementById('roomSearchInput');
     if (roomSearchInput) {
@@ -349,44 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const scheduleSearchInput = document.getElementById('scheduleSearchInput');
     if (scheduleSearchInput) {
         scheduleSearchInput.addEventListener('keyup', function() {
-            try {
-                const searchTerm = this.value.toLowerCase();
-                const scheduleCards = document.querySelectorAll('#schedules .schedule-card');
-                
-                if (scheduleCards.length === 0) {
-                    console.error('No schedule cards found');
-                    return;
-                }
-                
-                scheduleCards.forEach(card => {
-                    try {
-                        const cardTitle = card.querySelector('.card-title');
-                        const professorInfo = card.querySelector('small');
-                        const roomInfo = card.querySelector('p:nth-child(4)');
-                        
-                        if (!cardTitle || !professorInfo || !roomInfo) {
-                            console.error('Required elements not found in schedule card', card);
-                            return;
-                        }
-                        
-                        const courseName = cardTitle.textContent.toLowerCase();
-                        const professorName = professorInfo.textContent.toLowerCase();
-                        const roomName = roomInfo.textContent.toLowerCase();
-                        
-                        if (courseName.includes(searchTerm) || 
-                            professorName.includes(searchTerm) || 
-                            roomName.includes(searchTerm)) {
-                            card.parentElement.style.display = '';
-                        } else {
-                            card.parentElement.style.display = 'none';
-                        }
-                    } catch (cardError) {
-                        console.error('Error processing schedule card:', cardError);
-                    }
-                });
-            } catch (error) {
-                console.error('Error in schedule search:', error);
-            }
+            // This is now handled by the applyFilters function
         });
     } else {
         console.warn('Schedule search input not found');
@@ -563,3 +529,125 @@ document.addEventListener('DOMContentLoaded', function() {
         courseSearchInput.addEventListener('keyup', () => performSearch(courseSearchInput, 'courses'));
     }
 });
+
+// Initialize schedule filters - defined outside the DOMContentLoaded to avoid variable conflicts
+function initializeScheduleFilters() {
+    const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+    const scheduleCards = document.querySelectorAll('.schedule-card-container');
+    const clearFiltersBtn = document.getElementById('clearFiltersBtn');
+    
+    // Store active filters
+    let activeFilters = {
+        day: [],
+        professor: [],
+        room: []
+    };
+    
+    // Function to update filters when checkboxes are clicked
+    function updateFilters() {
+        // Reset active filters
+        activeFilters = {
+            day: [],
+            professor: [],
+            room: []
+        };
+        
+        // Collect all checked filters
+        filterCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                const filterType = checkbox.getAttribute('data-filter-type');
+                const filterValue = checkbox.value;
+                activeFilters[filterType].push(filterValue);
+            }
+        });
+        
+        // Apply the filters
+        applyFilters();
+    }
+    
+    // Apply filters to schedule cards
+    function applyFilters() {
+        const searchInput = document.getElementById('scheduleSearchInput');
+        const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+        
+        scheduleCards.forEach(card => {
+            let matchesFilters = true;
+            
+            // Day filter
+            if (activeFilters.day.length > 0) {
+                const dayElement = card.querySelector('.fa-calendar').parentNode;
+                const day = dayElement.textContent.trim();
+                if (!activeFilters.day.some(filterDay => day.includes(filterDay))) {
+                    matchesFilters = false;
+                }
+            }
+            
+            // Professor filter
+            if (activeFilters.professor.length > 0 && matchesFilters) {
+                const professorElement = card.querySelector('small.text-muted');
+                const professor = professorElement.textContent.replace('Prof. ', '').trim();
+                if (!activeFilters.professor.includes(professor)) {
+                    matchesFilters = false;
+                }
+            }
+            
+            // Room filter
+            if (activeFilters.room.length > 0 && matchesFilters) {
+                const roomElement = card.querySelector('.fa-door-open').parentNode;
+                const room = roomElement.textContent.replace('Room ', '').trim();
+                if (!activeFilters.room.includes(room)) {
+                    matchesFilters = false;
+                }
+            }
+            
+            // Search term filter
+            if (searchTerm && matchesFilters) {
+                const cardText = card.textContent.toLowerCase();
+                if (!cardText.includes(searchTerm)) {
+                    matchesFilters = false;
+                }
+            }
+            
+            // Show/hide the card based on the filter result
+            card.style.display = matchesFilters ? '' : 'none';
+        });
+    }
+    
+    // Add event listeners to checkboxes
+    filterCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateFilters);
+    });
+    
+    // Clear all filters button
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', function() {
+            filterCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Reset active filters
+            activeFilters = {
+                day: [],
+                professor: [],
+                room: []
+            };
+            
+            // If search input exists, clear it
+            const searchInput = document.getElementById('scheduleSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+            }
+            
+            // Show all cards
+            scheduleCards.forEach(card => {
+                card.style.display = '';
+            });
+        });
+    }
+    
+    // Connect search input to filter
+    const searchInput = document.getElementById('scheduleSearchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', applyFilters);
+    }
+}

@@ -85,11 +85,108 @@ if ($fixed_count > 0) {
                             </div>
                             <div class="mt-1 small text-muted">Type to search</div>
                         </div>
+                        
+                        <?php
+                        // Load schedules data before using it in filters
+                        $schedules = getSchedules($conn);
+                        ?>
+                        
+                        <!-- Collapsible Filter Section -->
+                        <div class="mb-3">
+                            <button class="btn btn-sm btn-outline-secondary d-flex justify-content-between align-items-center w-auto px-3 py-1" 
+                                    type="button" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#filterOptions" 
+                                    aria-expanded="false" 
+                                    aria-controls="filterOptions">
+                                <span><i class="fas fa-filter me-1"></i> Filters</span>
+                                <i class="fas fa-chevron-down ms-2"></i>
+                            </button>
+                            
+                            <div class="collapse mt-2" id="filterOptions">
+                                <div class="card card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6 class="filter-heading">Day</h6>
+                                            <div class="filter-group" id="dayFilters">
+                                                <?php
+                                                $days = [];
+                                                foreach ($schedules as $schedule) {
+                                                    if (!in_array($schedule['day'], $days)) {
+                                                        $days[] = $schedule['day'];
+                                                    }
+                                                }
+                                                foreach ($days as $day):
+                                                ?>
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-checkbox" type="checkbox" value="<?php echo $day; ?>" id="day_<?php echo $day; ?>" data-filter-type="day">
+                                                    <label class="form-check-label" for="day_<?php echo $day; ?>">
+                                                        <?php echo $day; ?>
+                                                    </label>
+                                                </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <h6 class="filter-heading">Professor</h6>
+                                            <div class="filter-group" id="professorFilters">
+                                                <?php
+                                                $professors = [];
+                                                foreach ($schedules as $schedule) {
+                                                    if (!in_array($schedule['professor_name'], $professors)) {
+                                                        $professors[] = $schedule['professor_name'];
+                                                    }
+                                                }
+                                                sort($professors);
+                                                foreach ($professors as $professor):
+                                                ?>
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-checkbox" type="checkbox" value="<?php echo $professor; ?>" id="prof_<?php echo md5($professor); ?>" data-filter-type="professor">
+                                                    <label class="form-check-label" for="prof_<?php echo md5($professor); ?>">
+                                                        <?php echo $professor; ?>
+                                                    </label>
+                                                </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4">
+                                            <h6 class="filter-heading">Room</h6>
+                                            <div class="filter-group" id="roomFilters">
+                                                <?php
+                                                $rooms = [];
+                                                foreach ($schedules as $schedule) {
+                                                    if (!in_array($schedule['room_name'], $rooms)) {
+                                                        $rooms[] = $schedule['room_name'];
+                                                    }
+                                                }
+                                                sort($rooms);
+                                                foreach ($rooms as $room):
+                                                ?>
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-checkbox" type="checkbox" value="<?php echo $room; ?>" id="room_<?php echo md5($room); ?>" data-filter-type="room">
+                                                    <label class="form-check-label" for="room_<?php echo md5($room); ?>">
+                                                        <?php echo $room; ?>
+                                                    </label>
+                                                </div>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-3 d-flex justify-content-between">
+                                        <button class="btn btn-sm btn-secondary" id="clearFiltersBtn">Clear All Filters</button>
+                                        <!-- <span class="text-muted small pt-2">Select multiple options to apply filters</span> -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="card">
                             <div class="card-body">
                                 <div class="row">
                                     <?php
-                                    $schedules = getSchedules($conn);
                                     foreach ($schedules as $schedule):
                                     ?>
                                     <div class="col-md-4 schedule-card-container">
@@ -477,6 +574,7 @@ if ($fixed_count > 0) {
     <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="scripts/script.js"></script>
+    <script src="scripts/filter.js"></script>
     <script>
         // Auto-dismiss alerts
         document.addEventListener('DOMContentLoaded', function() {

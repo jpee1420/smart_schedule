@@ -15,7 +15,7 @@ function getAllProfessors($conn) {
 
 // Get all courses from database
 function getAllCourses($conn) {
-    $sql = "SELECT * FROM courses ORDER BY course_name ASC";
+    $sql = "SELECT * FROM courses ORDER BY id ASC";
     $result = $conn->query($sql);
     return $result->fetch_all(MYSQLI_ASSOC);
 }

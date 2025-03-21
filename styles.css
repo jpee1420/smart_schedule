@@ -46,6 +46,46 @@
     margin-bottom: 1rem;
 }
 
+/* Filter styles */
+.filter-heading {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid #eee;
+}
+
+.filter-group {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.filter-checkbox:checked + label {
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+/* For the filter collapse button */
+[data-bs-toggle="collapse"] .fa-chevron-down {
+    transition: transform 0.2s ease;
+}
+
+[data-bs-toggle="collapse"][aria-expanded="true"] .fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+/* Filter button styling */
+.filter-button {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+}
+
+/* Filter container positioning */
+.filter-container {
+    position: relative;
+}
+
 .professor-image {
     width: 50px;
     height: 50px;
@@ -64,8 +104,6 @@
     border-radius: 8px;
     padding: 10px;
 }
-
-
 
 .professor-image-small {
     width: 40px;

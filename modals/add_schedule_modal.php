@@ -89,9 +89,8 @@ document.addEventListener('DOMContentLoaded', function() {
             options.forEach(option => {
                 option.style.display = '';
             });
-            
-            // Select the first option
-            if (options.length > 0) {
+
+            if (options.length > 0 && !courseSelect.value) {
                 options[0].selected = true;
             }
         }

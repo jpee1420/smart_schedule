@@ -124,7 +124,7 @@ if (empty($schedules)) {
     <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
     <link href="styles.css" rel="stylesheet">
     <!-- Add meta refresh every minute -->
-    <meta http-equiv="refresh" content="60">
+    <!-- <meta http-equiv="refresh" content="60"> -->
     <style>
         .carousel-item {
             padding: 2rem;
@@ -138,6 +138,7 @@ if (empty($schedules)) {
         }
         .schedule-card {
             height: 100%;
+            transition: all 0.3s ease;
         }
         .carousel-control-prev,
         .carousel-control-next {
@@ -175,12 +176,18 @@ if (empty($schedules)) {
             z-index: 9999;
             padding: 2rem;
         }
+        
+        /* Move carousel items down in fullscreen mode */
+        .fullscreen .carousel-item {
+            padding-top: 4rem; /* Extra top padding in fullscreen mode */
+        }
+        
         .current-time {
             position: fixed;
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 1000;
+            z-index: 10000; /* Increased z-index to be above fullscreen */
             font-size: 1.5rem;
             font-weight: bold;
             background-color: rgba(255, 255, 255, 0.9);
@@ -225,6 +232,62 @@ if (empty($schedules)) {
             background-color: #dc3545;
             color: white;
         }
+        /* Style for professor status badge */
+        .professor-status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            background-color: #198754;  /* Same as Bootstrap's bg-success */
+            color: #fff;
+        }
+        
+        /* Dynamic card sizes for different screen resolutions when in fullscreen mode */
+        @media screen and (min-height: 800px) {
+            body.browser-fullscreen .schedule-card {
+                min-height: 320px;
+                height: calc(35vh - 40px); /* Responsive height based on viewport */
+            }
+            
+            body.browser-fullscreen .card-body {
+                padding: 1.25rem;
+            }
+        }
+        
+        @media screen and (min-height: 1000px) {
+            body.browser-fullscreen .schedule-card {
+                min-height: 380px;
+                height: calc(38vh - 40px);
+            }
+            
+            body.browser-fullscreen .card-body {
+                padding: 1.5rem;
+            }
+        }
+        
+        @media screen and (min-height: 1200px) {
+            body.browser-fullscreen .schedule-card {
+                min-height: 420px;
+                height: calc(40vh - 40px);
+            }
+            
+            body.browser-fullscreen .card-body {
+                padding: 1.75rem;
+            }
+        }
+        
+        /* Additional styles for proper resizing in fullscreen */
+        body.browser-fullscreen .schedule-slide {
+            max-width: 95vw;
+        }
     </style>
 </head>
 <body>
@@ -246,7 +309,7 @@ if (empty($schedules)) {
                 <p>No schedules for <?php echo $currentDay; ?> at <?php echo date('h:i A'); ?></p>
             </div>
         <?php else: ?>
-        <div id="scheduleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="5000">
+        <div id="scheduleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="10000">
             <div class="carousel-indicators">
                 <?php
                 $total_slides = ceil(count($schedules) / 4);
@@ -304,7 +367,7 @@ if (empty($schedules)) {
                                     $badgeClass = 'warning';
                                 }
                                 ?>
-                                <span class="badge bg-<?php echo $badgeClass; ?>" 
+                                <span class="professor-status-badge" 
                                       data-professor-id="<?php echo $schedule['professor_id']; ?>">
                                     <?php echo $schedule['professor_status']; ?>
                                 </span>
@@ -317,14 +380,7 @@ if (empty($schedules)) {
             </div>
 
             <?php if (count($schedules) > 4): ?>
-            <button class="carousel-control-prev" type="button" data-bs-target="#scheduleCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#scheduleCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
-            </button>
+            <!-- Carousel controls removed -->
             <?php endif; ?>
         </div>
         <?php endif; ?>
@@ -344,6 +400,21 @@ if (empty($schedules)) {
             };
             document.getElementById('currentTime').textContent = now.toLocaleString('en-US', options);
         }
+
+        // Detect browser fullscreen (F11) mode
+        function detectFullscreen() {
+            if (window.innerHeight === screen.height) {
+                document.body.classList.add('browser-fullscreen');
+            } else {
+                document.body.classList.remove('browser-fullscreen');
+            }
+        }
+
+        // Listen for fullscreen change events
+        window.addEventListener('resize', detectFullscreen);
+        
+        // Initial fullscreen check
+        detectFullscreen();
 
         // Function to check schedule status
         function updateScheduleStatuses() {
@@ -454,7 +525,7 @@ if (empty($schedules)) {
                 setTimeout(() => {
                     const carousel = bootstrap.Carousel.getInstance(document.getElementById('scheduleCarousel'));
                     carousel.to(0);
-                }, 5000);
+                }, 10000);
             }
         });
     </script>

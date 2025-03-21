@@ -23,8 +23,35 @@ if ($fixed_count > 0) {
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
+    <!-- Alert Container -->
+    <div id="alertContainer">
+        <?php
+        // Display alert if message is set
+        if (isset($_SESSION['message']) && isset($_SESSION['message_type'])) {
+            echo '<div class="alert alert-' . $_SESSION['message_type'] . ' alert-dismissible fade show" role="alert">';
+            echo $_SESSION['message'];
+            echo '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            echo '</div>';
+            
+            // Clear the message
+            unset($_SESSION['message']);
+            unset($_SESSION['message_type']);
+        }
+        ?>
+    </div>
+
+    <!-- Scroll buttons container -->
+    <div class="scroll-buttons">
+        <button class="scroll-btn" id="scrollTopBtn" title="Scroll to Top">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+        <button class="scroll-btn" id="scrollBottomBtn" title="Scroll to Bottom">
+            <i class="fas fa-arrow-down"></i>
+        </button>
+    </div>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
             <!-- Left Sidebar -->
             <div class="col-md-2 sidebar p-0">
                 <div class="d-flex flex-column">
@@ -50,19 +77,6 @@ if ($fixed_count > 0) {
 
             <!-- Main Content -->
             <div class="col-md-8 p-4">
-                <div id="alertContainer">
-                    <?php if (isset($_SESSION['message'])): ?>
-                        <div class="alert alert-<?php echo $_SESSION['message_type']; ?> alert-dismissible fade show" role="alert">
-                            <?php echo $_SESSION['message']; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                        <?php 
-                        unset($_SESSION['message']);
-                        unset($_SESSION['message_type']);
-                        ?>
-                    <?php endif; ?>
-                </div>
-
                 <div class="tab-content">
                     <!-- Schedules Tab -->
                     <div class="tab-pane fade show active" id="schedules">
@@ -584,6 +598,24 @@ if ($fixed_count > 0) {
                     const bsAlert = new bootstrap.Alert(alert);
                     bsAlert.close();
                 }, 3000);
+            });
+            
+            // Scroll button functionality
+            const scrollTopBtn = document.getElementById('scrollTopBtn');
+            const scrollBottomBtn = document.getElementById('scrollBottomBtn');
+            
+            scrollTopBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            });
+            
+            scrollBottomBtn.addEventListener('click', function() {
+                window.scrollTo({
+                    top: document.body.scrollHeight,
+                    behavior: 'smooth'
+                });
             });
         });
     </script>

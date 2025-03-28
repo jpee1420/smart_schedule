@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'functions.php';
+require_once 'queries.php';
 
 // Set timezone to Philippines
 date_default_timezone_set('Asia/Manila');
@@ -124,7 +124,7 @@ if (empty($schedules)) {
     <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
     <link href="styles.css" rel="stylesheet">
     <!-- Add meta refresh every minute -->
-    <!-- <meta http-equiv="refresh" content="60"> -->
+    <meta http-equiv="refresh" content="60">
     <style>
         .carousel-item {
             padding: 2rem;
@@ -246,8 +246,6 @@ if (empty($schedules)) {
             position: absolute;
             bottom: 10px;
             left: 20px;
-            background-color: #198754;  /* Same as Bootstrap's bg-success */
-            color: #fff;
         }
         
         /* Dynamic card sizes for different screen resolutions when in fullscreen mode */
@@ -288,6 +286,67 @@ if (empty($schedules)) {
         body.browser-fullscreen .schedule-slide {
             max-width: 95vw;
         }
+        
+        /* Duration control styles */
+        .duration-control {
+            position: fixed;
+            top: 20px;
+            right: 160px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: opacity 0.3s ease;
+        }
+        .form-range {
+            width: 150px;
+        }
+        .fullscreen .duration-control {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Countdown timer styles */
+        .countdown-timer {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            z-index: 10000; /* Higher z-index to appear above fullscreen */
+            font-weight: bold;
+            transition: opacity 0.3s ease;
+            display: none; /* Hide the countdown timer */
+        }
+        
+        #countdown {
+            display: inline-block;
+            min-width: 20px;
+            text-align: center;
+        }
+        
+        /* Progress bar styles */
+        .carousel-progress-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10000;
+        }
+        
+        .progress {
+            height: 6px;
+            border-radius: 0;
+            background-color: transparent;
+        }
+        
+        .progress-bar {
+            transition: width 0.1s linear;
+        }
     </style>
 </head>
 <body>
@@ -299,17 +358,38 @@ if (empty($schedules)) {
         <i class="fas fa-arrow-left"></i> Back to Dashboard
     </a>
     <button class="btn btn-secondary fullscreen-button" onclick="toggleFullscreen()">
-        <i class="fas fa-expand"></i> Toggle Fullscreen
+        <i class="fas fa-compress"></i> Toggle Fullscreen
     </button>
 
-    <div class="carousel-container">
+    <!-- Duration Control -->
+    <div id="durationControl" class="duration-control">
+        <div class="d-flex align-items-center">
+            <span class="me-2 small">Speed:</span>
+            <input type="range" class="form-range" id="durationSlider" min="3" max="30" step="1" value="10">
+            <span class="ms-2 small" id="durationValue">10s</span>
+        </div>
+    </div>
+
+    <!-- Countdown Timer -->
+    <div id="countdownTimer" class="countdown-timer">
+        Next slide in: <span id="countdown">10</span>s
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="carousel-progress-container">
+        <div class="progress">
+            <div id="carouselProgress" class="progress-bar bg-secondary" role="progressbar" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <div class="carousel-container fullscreen">
         <?php if (empty($schedules)): ?>
             <div class="no-schedule">
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
                 <p>No schedules for <?php echo $currentDay; ?> at <?php echo date('h:i A'); ?></p>
             </div>
         <?php else: ?>
-        <div id="scheduleCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="10000">
+        <div id="scheduleCarousel" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-indicators">
                 <?php
                 $total_slides = ceil(count($schedules) / 4);
@@ -360,14 +440,16 @@ if (empty($schedules)) {
                                     Room <?php echo htmlspecialchars($schedule['room_name']); ?>
                                 </p>
                                 <?php
-                                $badgeClass = 'success';
+                                $badgeClass = 'bg-success text-white';
                                 if ($schedule['professor_status'] === 'Absent') {
-                                    $badgeClass = 'danger';
+                                    $badgeClass = 'bg-danger text-white';
                                 } else if ($schedule['professor_status'] === 'On Leave') {
-                                    $badgeClass = 'warning';
+                                    $badgeClass = 'bg-warning text-dark';
+                                } else if ($schedule['professor_status'] === 'On Meeting') {
+                                    $badgeClass = 'bg-primary text-white';
                                 }
                                 ?>
-                                <span class="professor-status-badge" 
+                                <span class="professor-status-badge <?php echo $badgeClass; ?>" 
                                       data-professor-id="<?php echo $schedule['professor_id']; ?>">
                                     <?php echo $schedule['professor_status']; ?>
                                 </span>
@@ -388,6 +470,145 @@ if (empty($schedules)) {
 
     <script src="js/bootstrap.bundle.min.js"></script>
     <script>
+        // Global variables for carousel control
+        let carouselDuration = 10; // Default duration in seconds
+        let carouselInstance;
+        let countdownInterval; // Interval for countdown timer
+        let countdownValue = carouselDuration; // Current countdown value
+        
+        // Initialize in fullscreen mode
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved duration from localStorage if available
+            if (localStorage.getItem('carouselDuration')) {
+                carouselDuration = parseInt(localStorage.getItem('carouselDuration'));
+                document.getElementById('durationSlider').value = carouselDuration;
+                document.getElementById('durationValue').textContent = carouselDuration + 's';
+                countdownValue = carouselDuration;
+                document.getElementById('countdown').textContent = countdownValue;
+            } else {
+                // Set initial countdown display
+                document.getElementById('countdown').textContent = carouselDuration;
+            }
+            
+            // Initialize carousel with saved duration
+            const carousel = document.getElementById('scheduleCarousel');
+            if (carousel) {
+                // Remove the direct initialization and use a more controlled approach
+                carousel.removeAttribute('data-bs-ride');
+                carousel.setAttribute('data-bs-interval', 'false'); // Disable automatic cycling
+                
+                // Create carousel instance with no autoplay
+                carouselInstance = new bootstrap.Carousel(carousel, {
+                    interval: false,  // Disable auto cycling
+                    pause: false      // Don't pause on hover
+                });
+                
+                // Use 'slid.bs.carousel' (happens after slide) instead of 'slide.bs.carousel'
+                carousel.addEventListener('slid.bs.carousel', function() {
+                    // Reset the countdown after a slide completes
+                    resetCountdown();
+                });
+            }
+            
+            // Set to fullscreen by default
+            const container = document.querySelector('.carousel-container');
+            const button = document.querySelector('.fullscreen-button i');
+            const fullscreenButton = document.querySelector('.fullscreen-button');
+            
+            container.classList.add('fullscreen');
+            button.classList.remove('fa-expand');
+            button.classList.add('fa-compress');
+            fullscreenButton.setAttribute('title', 'Exit Fullscreen');
+            
+            // Also check if browser is in fullscreen mode
+            detectFullscreen();
+            
+            // Setup duration slider
+            const durationSlider = document.getElementById('durationSlider');
+            durationSlider.addEventListener('input', function() {
+                updateCarouselDuration(this.value);
+            });
+            
+            // Start the countdown timer
+            startCountdown();
+        });
+        
+        // Function to update carousel duration
+        function updateCarouselDuration(seconds) {
+            carouselDuration = parseInt(seconds);
+            document.getElementById('durationValue').textContent = seconds + 's';
+            
+            // Update countdown - this will control when slides advance
+            countdownValue = carouselDuration;
+            document.getElementById('countdown').textContent = countdownValue;
+            resetCountdown();
+            
+            // Save to localStorage for persistence
+            localStorage.setItem('carouselDuration', carouselDuration);
+        }
+        
+        // Function to start the countdown timer
+        function startCountdown() {
+            // Clear any existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // Reset countdown value
+            countdownValue = carouselDuration;
+            document.getElementById('countdown').textContent = countdownValue;
+            
+            // Reset progress bar
+            const progressBar = document.getElementById('carouselProgress');
+            progressBar.style.width = '0%';
+            
+            // Add 1-second delay before starting the countdown
+            setTimeout(function() {
+                // Calculate update interval for smoother progress bar
+                const updateInterval = 50; // milliseconds
+                const steps = (carouselDuration * 1000) / updateInterval;
+                let currentStep = 0;
+                
+                // Start the countdown and progress bar update
+                countdownInterval = setInterval(function() {
+                    currentStep++;
+                    
+                    // Update progress bar
+                    const progress = (currentStep / steps) * 100;
+                    progressBar.style.width = progress + '%';
+                    
+                    // Update countdown every second
+                    if (currentStep % (1000 / updateInterval) === 0) {
+                        countdownValue--;
+                        document.getElementById('countdown').textContent = countdownValue;
+                    }
+                    
+                    // When complete
+                    if (currentStep >= steps) {
+                        // When reaching the end, advance to the next slide
+                        if (carouselInstance) {
+                            carouselInstance.next();
+                        }
+                        // Don't reset here - it will be reset by the slid.bs.carousel event
+                        clearInterval(countdownInterval);
+                        progressBar.style.width = '100%';
+                    }
+                }, updateInterval);
+            }, 100); // 1-second delay
+        }
+        
+        // Function to reset the countdown timer
+        function resetCountdown() {
+            countdownValue = carouselDuration;
+            document.getElementById('countdown').textContent = countdownValue;
+            
+            // Restart the countdown
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            startCountdown();
+        }
+        
         // Function to update current time
         function updateTime() {
             const now = new Date();
@@ -490,15 +711,19 @@ if (empty($schedules)) {
             if (!container.classList.contains('fullscreen')) {
                 // Enter fullscreen
                 container.classList.add('fullscreen');
-                button.classList.remove('fa-expand');
-                button.classList.add('fa-compress');
+                button.classList.remove('fa-compress');
+                button.classList.add('fa-expand');
                 fullscreenButton.setAttribute('title', 'Exit Fullscreen');
+                // Reset countdown for accurate timing
+                resetCountdown();
             } else {
                 // Exit fullscreen
                 container.classList.remove('fullscreen');
-                button.classList.remove('fa-compress');
-                button.classList.add('fa-expand');
+                button.classList.remove('fa-expand');
+                button.classList.add('fa-compress');
                 fullscreenButton.setAttribute('title', 'Enter Fullscreen');
+                // Reset countdown for accurate timing
+                resetCountdown();
             }
         }
 
@@ -511,9 +736,11 @@ if (empty($schedules)) {
                 
                 if (container.classList.contains('fullscreen')) {
                     container.classList.remove('fullscreen');
-                    button.classList.remove('fa-compress');
-                    button.classList.add('fa-expand');
+                    button.classList.remove('fa-expand');
+                    button.classList.add('fa-compress');
                     fullscreenButton.setAttribute('title', 'Enter Fullscreen');
+                    // Reset countdown for accurate timing
+                    resetCountdown();
                 }
             }
         });
@@ -522,10 +749,9 @@ if (empty($schedules)) {
         document.getElementById('scheduleCarousel')?.addEventListener('slid.bs.carousel', function(event) {
             const totalSlides = <?php echo isset($total_slides) ? $total_slides : 0; ?>;
             if (event.to === totalSlides - 1) {
-                setTimeout(() => {
-                    const carousel = bootstrap.Carousel.getInstance(document.getElementById('scheduleCarousel'));
-                    carousel.to(0);
-                }, 10000);
+                // Last slide - we'll automatically cycle to the first slide 
+                // after the duration via our custom timer
+                // No need for additional setTimeout here
             }
         });
     </script>

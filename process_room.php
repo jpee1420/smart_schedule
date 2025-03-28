@@ -6,12 +6,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = $conn->real_escape_string($_POST['name']);
     
     if (isset($_POST['id'])) {
-        // Update existing room
         $id = (int)$_POST['id'];
         $sql = "UPDATE rooms SET name = '$name' WHERE id = $id";
         $message = 'Room updated successfully!';
     } else {
-        // Add new room
+
         $sql = "INSERT INTO rooms (name) VALUES ('$name')";
         $message = 'Room added successfully!';
     }

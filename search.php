@@ -1,6 +1,6 @@
 <?php
 require_once 'config.php';
-require_once 'functions.php';
+require_once 'queries.php';
 
 // Set headers to prevent caching
 header('Cache-Control: no-cache, must-revalidate');

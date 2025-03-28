@@ -307,10 +307,10 @@ function verifyAndFixProfessorImage($conn, $professor_id) {
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $professor_id);
             $stmt->execute();
-            return true; // Image was fixed
+            return true; 
         }
     }
-    return false; // No fix needed
+    return false; 
 }
 
 // Verify all professor images

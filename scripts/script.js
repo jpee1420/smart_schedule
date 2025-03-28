@@ -103,21 +103,33 @@ function updateProfessorStatus(professorId, status) {
     })
     .then(data => {
         if (data.success) {
-            // Update the badge without reloading the page
+            // Update all badges with this professor ID
             const scheduleCards = document.querySelectorAll('.schedule-card');
             scheduleCards.forEach(card => {
                 if (card.querySelector(`[data-professor-id="${professorId}"]`)) {
                     const badge = card.querySelector('.badge');
                     let badgeClass = 'success';
+                    let textClass = 'text-white';
                     if (status === 'Absent') {
                         badgeClass = 'danger';
+                        textClass = 'text-white';
                     } else if (status === 'On Leave') {
                         badgeClass = 'warning';
+                        textClass = 'text-dark';
+                    } else if (status === 'On Meeting') {
+                        badgeClass = 'primary';
+                        textClass = 'text-white';
                     }
-                    badge.className = `badge bg-${badgeClass}`;
+                    badge.className = `badge bg-${badgeClass} ${textClass}`;
                     badge.textContent = status;
                 }
             });
+            
+            // Update the select element styling
+            const selectElement = document.querySelector(`.status-select[data-professor-id="${professorId}"]`);
+            if (selectElement && typeof updateStatusSelectStyle === 'function') {
+                updateStatusSelectStyle(selectElement);
+            }
         } else {
             alert(data.message || 'Failed to update status');
         }

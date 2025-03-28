@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'functions.php';
+require_once 'queries.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // $subject = $conn->real_escape_string($_POST['subject']);

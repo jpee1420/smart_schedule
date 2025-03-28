@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'functions.php';
+require_once 'queries.php';
 
 // Verify all professor images at page load
 $fixed_count = verifyAllProfessorImages($conn);
@@ -16,9 +16,7 @@ if ($fixed_count > 0) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule Management System</title>
-    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
     <link href="css/all.min.css" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
 </head>
@@ -91,7 +89,7 @@ if ($fixed_count > 0) {
                                 </button>
                             </div>
                         </div>
-                        <!-- Add search bar for schedules -->
+                        <!-- search bar for schedules -->
                         <div class="mb-3">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -101,11 +99,8 @@ if ($fixed_count > 0) {
                         </div>
                         
                         <?php
-                        // Load schedules data before using it in filters
                         $schedules = getSchedules($conn);
                         ?>
-                        
-                        <!-- Collapsible Filter Section -->
                         <div class="mb-3">
                             <button class="btn btn-sm btn-outline-secondary d-flex justify-content-between align-items-center w-auto px-3 py-1" 
                                     type="button" 
@@ -191,7 +186,6 @@ if ($fixed_count > 0) {
                                     
                                     <div class="mt-3 d-flex justify-content-between">
                                         <button class="btn btn-sm btn-secondary" id="clearFiltersBtn">Clear All Filters</button>
-                                        <!-- <span class="text-muted small pt-2">Select multiple options to apply filters</span> -->
                                     </div>
                                 </div>
                             </div>
@@ -233,13 +227,19 @@ if ($fixed_count > 0) {
                                                 <div class="d-flex justify-content-between align-items-center mt-auto">
                                                     <?php
                                                     $badgeClass = 'success';
+                                                    $textClass = 'text-white';
                                                     if ($schedule['professor_status'] === 'Absent') {
                                                         $badgeClass = 'danger';
+                                                        $textClass = 'text-white';
                                                     } else if ($schedule['professor_status'] === 'On Leave') {
                                                         $badgeClass = 'warning';
+                                                        $textClass = 'text-dark';
+                                                    } else if ($schedule['professor_status'] === 'On Meeting') {
+                                                        $badgeClass = 'primary';
+                                                        $textClass = 'text-white';
                                                     }
                                                     ?>
-                                                    <span class="badge bg-<?php echo $badgeClass; ?>" 
+                                                    <span class="badge bg-<?php echo $badgeClass; ?> <?php echo $textClass; ?>" 
                                                           data-professor-id="<?php echo $schedule['professor_id']; ?>">
                                                         <?php echo $schedule['professor_status']; ?>
                                                     </span>
@@ -287,7 +287,7 @@ if ($fixed_count > 0) {
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <!-- Add search bar for rooms -->
+                                <!-- search bar for rooms -->
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -295,7 +295,7 @@ if ($fixed_count > 0) {
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <!-- List View -->
+
                                 <div class="list-view">
                                     <div class="table-responsive">
                                         <table class="table table-hover">
@@ -328,7 +328,7 @@ if ($fixed_count > 0) {
                                         </table>
                                     </div>
                                 </div>
-                                <!-- Grid View -->
+                                
                                 <div class="grid-view" style="display: none;">
                                     <?php foreach ($rooms as $room): ?>
                                     <div class="grid-item">
@@ -371,7 +371,7 @@ if ($fixed_count > 0) {
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <!-- Add search bar for professors -->
+                                <!-- search bar for professors -->
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -379,7 +379,7 @@ if ($fixed_count > 0) {
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <!-- List View -->
+                                
                                 <div class="list-view">
                                     <div class="table-responsive">
                                         <table class="table table-hover">
@@ -420,7 +420,7 @@ if ($fixed_count > 0) {
                                         </table>
                                     </div>
                                 </div>
-                                <!-- Grid View -->
+
                                 <div class="grid-view" style="display: none;">
                                     <?php foreach ($professors as $professor): ?>
                                     <div class="grid-item">
@@ -465,7 +465,7 @@ if ($fixed_count > 0) {
                         </div>
                         <div class="card">
                             <div class="card-body">
-                                <!-- Add search bar for courses -->
+                                <!-- search bar for courses -->
                                 <div class="mb-3">
                                     <div class="input-group">
                                         <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -473,7 +473,7 @@ if ($fixed_count > 0) {
                                     </div>
                                     <div class="mt-1 small text-muted">Type to search</div>
                                 </div>
-                                <!-- List View -->
+                                
                                 <div class="list-view">
                                     <div class="table-responsive">
                                         <table class="table table-hover">
@@ -514,7 +514,7 @@ if ($fixed_count > 0) {
                                         </table>
                                     </div>
                                 </div>
-                                <!-- Grid View -->
+                            
                                 <div class="grid-view" style="display: none;">
                                     <?php foreach ($courses as $course): ?>
                                     <div class="grid-item">
@@ -542,7 +542,6 @@ if ($fixed_count > 0) {
                 </div>
             </div>
 
-            <!-- Right Sidebar -->
             <div class="col-md-2 sidebar-right p-0">
                 <div class="d-flex flex-column">
                     <div class="p-3 text-white">
@@ -563,10 +562,12 @@ if ($fixed_count > 0) {
                                 <div class="flex-grow-1">
                                     <h6 class="mb-1"><?php echo $professor['name']; ?></h6>
                                     <select class="form-select form-select-sm status-select" 
+                                            data-professor-id="<?php echo $professor['id']; ?>"
                                             onchange="updateProfessorStatus(<?php echo $professor['id']; ?>, this.value)">
                                         <option value="Present" <?php echo getProfessorStatus($conn, $professor['id']) == 'Present' ? 'selected' : ''; ?>>Present</option>
                                         <option value="Absent" <?php echo getProfessorStatus($conn, $professor['id']) == 'Absent' ? 'selected' : ''; ?>>Absent</option>
                                         <option value="On Leave" <?php echo getProfessorStatus($conn, $professor['id']) == 'On Leave' ? 'selected' : ''; ?>>On Leave</option>
+                                        <option value="On Meeting" <?php echo getProfessorStatus($conn, $professor['id']) == 'On Meeting' ? 'selected' : ''; ?>>On Meeting</option>
                                     </select>
                                 </div>
                             </div>
@@ -617,7 +618,37 @@ if ($fixed_count > 0) {
                     behavior: 'smooth'
                 });
             });
+            
+            initProfessorStatusStyles();
         });
+        
+        function initProfessorStatusStyles() {
+            const statusSelects = document.querySelectorAll('.status-select');
+            
+            statusSelects.forEach(select => {
+                updateStatusSelectStyle(select);
+                
+                select.addEventListener('change', function() {
+                    updateStatusSelectStyle(this);
+                });
+            });
+        }
+        
+        function updateStatusSelectStyle(selectElement) {
+            selectElement.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-primary', 'text-white', 'text-dark');
+            
+            // Add appropriate classes based on selection
+            const status = selectElement.value;
+            if (status === 'Present') {
+                selectElement.classList.add('bg-success', 'text-white');
+            } else if (status === 'Absent') {
+                selectElement.classList.add('bg-danger', 'text-white');
+            } else if (status === 'On Leave') {
+                selectElement.classList.add('bg-warning', 'text-dark');
+            } else if (status === 'On Meeting') {
+                selectElement.classList.add('bg-primary', 'text-white');
+            }
+        }
     </script>
 </body>
 </html>

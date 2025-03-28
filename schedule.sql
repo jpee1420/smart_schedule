@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS `schedules` (
   `end_time` time DEFAULT NULL,
   `day` enum('MWF','TTH','Sat') DEFAULT 'MWF',
   `notes` text DEFAULT NULL,
-  `professor_status` enum('Present','Absent', 'On Leave') DEFAULT 'Present',
+  `professor_status` enum('Present','Absent', 'On Leave', 'On Meeting') DEFAULT 'Present',
   PRIMARY KEY (`id`),
   KEY `course_id` (`course_id`),
   KEY `room_id` (`room_id`),

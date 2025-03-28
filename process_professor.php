@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'functions.php';
+require_once 'queries.php';
 
 // Create uploads directory if it doesn't exist
 $uploadDir = 'uploads';
@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $status = isset($_POST['status']) ? $_POST['status'] : '';
         
-        $validStatuses = ['Present', 'Absent', 'On Leave'];
+        $validStatuses = ['Present', 'Absent', 'On Leave', 'On Meeting'];
         if (!in_array($status, $validStatuses)) {
             echo json_encode(['success' => false, 'message' => 'Invalid status']);
             exit;

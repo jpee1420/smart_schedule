@@ -235,8 +235,8 @@ if ($fixed_count > 0) {
                                                         $badgeClass = 'warning';
                                                         $textClass = 'text-dark';
                                                     } else if ($schedule['professor_status'] === 'On Meeting') {
-                                                        $badgeClass = 'primary';
-                                                        $textClass = 'text-white';
+                                                        $badgeClass = 'info';
+                                                        $textClass = 'text-dark';
                                                     }
                                                     ?>
                                                     <span class="badge bg-<?php echo $badgeClass; ?> <?php echo $textClass; ?>" 
@@ -646,7 +646,7 @@ if ($fixed_count > 0) {
             } else if (status === 'On Leave') {
                 selectElement.classList.add('bg-warning', 'text-dark');
             } else if (status === 'On Meeting') {
-                selectElement.classList.add('bg-primary', 'text-white');
+                selectElement.classList.add('bg-info', 'text-dark');
             }
         }
     </script>

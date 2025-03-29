@@ -121,13 +121,13 @@ if (empty($schedules)) {
     <title>Current Schedules - Schedule Management System</title>
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/all.min.css" rel="stylesheet"> 
-    <!-- <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"> -->
     <link href="styles.css" rel="stylesheet">
     <!-- Add meta refresh every minute -->
-    <meta http-equiv="refresh" content="60">
+    <meta http-equiv="refresh" content="120">
     <style>
         .carousel-item {
-            padding: 2rem;
+            padding: 4.5rem;
+            top: 60px;
         }
         .schedule-slide {
             display: grid;
@@ -145,46 +145,44 @@ if (empty($schedules)) {
             width: 5%;
             background-color: rgba(0,0,0,0.2);
         }
-        .carousel-indicators {
-            bottom: -50px;
-        }
-        .carousel-indicators button {
-            background-color: #6c757d;
-        }
         .back-button {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-        }
-        .fullscreen-button {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-        }
-        .carousel-container {
-            padding: 60px 0;
-        }
-        .fullscreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: white;
-            z-index: 9999;
-            padding: 2rem;
+            top: 90px;
+            left: 70px;
+            z-index: 10000;
+            opacity: 1;
+            transition: all 0.3s ease;
+            font-size: 1.2rem;
+            padding: 0.5rem;
+            background-color: rgba(108, 117, 125, 0.8);
+            color: white;
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        /* Move carousel items down in fullscreen mode */
-        .fullscreen .carousel-item {
-            padding-top: 4rem; /* Extra top padding in fullscreen mode */
+        .back-button:hover {
+            background-color: rgba(108, 117, 125, 1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Hide back button and duration control in browser fullscreen mode */
+        body.browser-fullscreen .back-button,
+        body.browser-fullscreen .duration-control {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
         }
         
         .current-time {
             position: fixed;
-            top: 20px;
+            top: 100px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 10000; /* Increased z-index to be above fullscreen */
@@ -195,11 +193,28 @@ if (empty($schedules)) {
             border-radius: 5px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
+        
         .no-schedule {
             text-align: center;
-            padding: 2rem;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 3rem;
             font-size: 1.5rem;
             color: #6c757d;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .no-schedule i {
+            font-size: 4rem;
+            color: #6c757d;
+            margin-bottom: 1.5rem;
         }
         /* Add new styles for schedule status */
         .schedule-card.inactive {
@@ -251,8 +266,8 @@ if (empty($schedules)) {
         /* Dynamic card sizes for different screen resolutions when in fullscreen mode */
         @media screen and (min-height: 800px) {
             body.browser-fullscreen .schedule-card {
-                min-height: 320px;
-                height: calc(35vh - 40px); /* Responsive height based on viewport */
+                min-height: 280px;
+                height: calc(32vh - 40px);
             }
             
             body.browser-fullscreen .card-body {
@@ -262,8 +277,8 @@ if (empty($schedules)) {
         
         @media screen and (min-height: 1000px) {
             body.browser-fullscreen .schedule-card {
-                min-height: 380px;
-                height: calc(38vh - 40px);
+                min-height: 340px;
+                height: calc(35vh - 40px);
             }
             
             body.browser-fullscreen .card-body {
@@ -273,8 +288,8 @@ if (empty($schedules)) {
         
         @media screen and (min-height: 1200px) {
             body.browser-fullscreen .schedule-card {
-                min-height: 420px;
-                height: calc(40vh - 40px);
+                min-height: 380px;
+                height: calc(37vh - 40px);
             }
             
             body.browser-fullscreen .card-body {
@@ -290,21 +305,44 @@ if (empty($schedules)) {
         /* Duration control styles */
         .duration-control {
             position: fixed;
-            top: 20px;
-            right: 160px;
+            bottom: 20px;
+            left: 20px;
             background-color: rgba(255, 255, 255, 0.9);
-            padding: 5px 10px;
+            padding: 10px;
             border-radius: 5px;
-            z-index: 1000;
+            z-index: 10000; /* Increased z-index to match other elements */
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            max-width: 300px;
+        }
+        
+        .duration-control.collapsed {
+            max-width: 50px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .duration-control.collapsed .duration-content {
+            display: none;
+        }
+        
+        .duration-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        
+        .duration-content {
             transition: opacity 0.3s ease;
         }
+        
         .form-range {
-            width: 150px;
-        }
-        .fullscreen .duration-control {
-            opacity: 0;
-            pointer-events: none;
+            width: 100%;
+            margin: 10px 0;
         }
         
         /* Countdown timer styles */
@@ -317,7 +355,7 @@ if (empty($schedules)) {
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 0.9rem;
-            z-index: 10000; /* Higher z-index to appear above fullscreen */
+            z-index: 10000;
             font-weight: bold;
             transition: opacity 0.3s ease;
             display: none; /* Hide the countdown timer */
@@ -347,26 +385,98 @@ if (empty($schedules)) {
         .progress-bar {
             transition: width 0.1s linear;
         }
+
+        /* Developer signature styles */
+        .developer-signature {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            z-index: 10000; /* Increased z-index to be above fullscreen */
+            text-align: right;
+            font-style: italic;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            pointer-events: none; /* Prevent interference with other elements */
+        }
+
+        .developer-signature span {
+            display: block;
+            margin: 2px 0;
+        }
+
+        /* Header styles */
+        .university-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            height: 4rem;
+            width: auto;
+            margin-left: 15px;
+            margin-right: 15px;
+            object-fit: cover;
+            display: block;
+        }
+        
+
+        .university-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .carousel-container {
+            padding-top: 100px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            z-index: 9999;
+            padding: 2rem;
+        }
+
     </style>
 </head>
 <body>
+    <div class="university-header">
+        <img src="assets/images/ul-logo.png" alt="University Logo" class="university-logo logo">
+        <h1 class="university-name">University of Luzon College of Computer Studies</h1>
+        <img src="assets/images/cs-logo.png" alt="Department Logo" class="department-logo logo">
+    </div>
+
     <div class="current-time" id="currentTime">
         <?php echo date('l, h:i:s A'); ?>
     </div>
     
-    <a href="index.php" class="btn btn-primary back-button">
-        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    <a href="index.php" class="btn btn-secondary back-button" title="Back to Dashboard">
+        <i class="fas fa-arrow-left"></i>
     </a>
-    <button class="btn btn-secondary fullscreen-button" onclick="toggleFullscreen()">
-        <i class="fas fa-compress"></i> Toggle Fullscreen
-    </button>
 
     <!-- Duration Control -->
-    <div id="durationControl" class="duration-control">
-        <div class="d-flex align-items-center">
-            <span class="me-2 small">Speed:</span>
-            <input type="range" class="form-range" id="durationSlider" min="3" max="30" step="1" value="10">
-            <span class="ms-2 small" id="durationValue">10s</span>
+    <div id="durationControl" class="duration-control collapsed">
+        <div class="duration-toggle">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="duration-content">
+            <div class="d-flex align-items-center">
+                <span class="me-2 small">Speed:</span>
+                <input type="range" class="form-range" id="durationSlider" min="3" max="30" step="1" value="10">
+                <span class="ms-2 small" id="durationValue">10s</span>
+            </div>
         </div>
     </div>
 
@@ -382,7 +492,7 @@ if (empty($schedules)) {
         </div>
     </div>
 
-    <div class="carousel-container fullscreen">
+    <div class="carousel-container">
         <?php if (empty($schedules)): ?>
             <div class="no-schedule">
                 <i class="fas fa-calendar-times fa-3x mb-3"></i>
@@ -390,16 +500,6 @@ if (empty($schedules)) {
             </div>
         <?php else: ?>
         <div id="scheduleCarousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators">
-                <?php
-                $total_slides = ceil(count($schedules) / 4);
-                for ($i = 0; $i < $total_slides; $i++):
-                ?>
-                <button type="button" data-bs-target="#scheduleCarousel" data-bs-slide-to="<?php echo $i; ?>" 
-                        <?php echo $i === 0 ? 'class="active"' : ''; ?>></button>
-                <?php endfor; ?>
-            </div>
-
             <div class="carousel-inner">
                 <?php
                 $chunks = array_chunk($schedules, 4);
@@ -446,7 +546,7 @@ if (empty($schedules)) {
                                 } else if ($schedule['professor_status'] === 'On Leave') {
                                     $badgeClass = 'bg-warning text-dark';
                                 } else if ($schedule['professor_status'] === 'On Meeting') {
-                                    $badgeClass = 'bg-primary text-white';
+                                    $badgeClass = 'bg-info text-dark';
                                 }
                                 ?>
                                 <span class="professor-status-badge <?php echo $badgeClass; ?>" 
@@ -460,12 +560,15 @@ if (empty($schedules)) {
                 </div>
                 <?php endforeach; ?>
             </div>
-
-            <?php if (count($schedules) > 4): ?>
-            <!-- Carousel controls removed -->
-            <?php endif; ?>
         </div>
         <?php endif; ?>
+    </div>
+
+    <!-- Developer Signature -->
+    <div class="developer-signature">
+        <span>Developed by</span>
+        <span>Juan Paolo Picar & Ieson Louis Muyano</span>
+        <span>Q1, 2025</span>
     </div>
 
     <script src="js/bootstrap.bundle.min.js"></script>
@@ -476,7 +579,7 @@ if (empty($schedules)) {
         let countdownInterval; // Interval for countdown timer
         let countdownValue = carouselDuration; // Current countdown value
         
-        // Initialize in fullscreen mode
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // Load saved duration from localStorage if available
             if (localStorage.getItem('carouselDuration')) {
@@ -510,16 +613,6 @@ if (empty($schedules)) {
                 });
             }
             
-            // Set to fullscreen by default
-            const container = document.querySelector('.carousel-container');
-            const button = document.querySelector('.fullscreen-button i');
-            const fullscreenButton = document.querySelector('.fullscreen-button');
-            
-            container.classList.add('fullscreen');
-            button.classList.remove('fa-expand');
-            button.classList.add('fa-compress');
-            fullscreenButton.setAttribute('title', 'Exit Fullscreen');
-            
             // Also check if browser is in fullscreen mode
             detectFullscreen();
             
@@ -531,6 +624,14 @@ if (empty($schedules)) {
             
             // Start the countdown timer
             startCountdown();
+
+            // Add duration control toggle
+            const durationControl = document.getElementById('durationControl');
+            const durationToggle = durationControl.querySelector('.duration-toggle');
+            
+            durationToggle.addEventListener('click', function() {
+                durationControl.classList.toggle('collapsed');
+            });
         });
         
         // Function to update carousel duration
@@ -614,20 +715,40 @@ if (empty($schedules)) {
             const now = new Date();
             const options = { 
                 weekday: 'long',
-                hour: 'numeric',
+                month: 'long',
+                day: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true 
+                hour12: true
             };
-            document.getElementById('currentTime').textContent = now.toLocaleString('en-US', options);
+            const dateStr = now.toLocaleString('en-US', options);
+            // Format: "Monday, 03/25/2024, 2:30:45 PM"
+            const formattedDate = dateStr.replace(/(\d+)\/(\d+)\/(\d+)/, '$1/$2/$3');
+            document.getElementById('currentTime').textContent = formattedDate;
         }
 
         // Detect browser fullscreen (F11) mode
         function detectFullscreen() {
             if (window.innerHeight === screen.height) {
                 document.body.classList.add('browser-fullscreen');
+                
+                // Hide back button and duration control in browser fullscreen
+                const backButton = document.querySelector('.back-button');
+                const durationControl = document.querySelector('.duration-control');
+                
+                if (backButton) backButton.style.display = 'none';
+                if (durationControl) durationControl.style.display = 'none';
             } else {
                 document.body.classList.remove('browser-fullscreen');
+                
+                // Show back button and duration control when not in browser fullscreen
+                const backButton = document.querySelector('.back-button');
+                const durationControl = document.querySelector('.duration-control');
+                
+                if (backButton) backButton.style.display = 'flex';
+                if (durationControl) durationControl.style.display = 'block';
             }
         }
 
@@ -703,57 +824,20 @@ if (empty($schedules)) {
         updateTime();
         updateScheduleStatuses();
 
-        function toggleFullscreen() {
-            const container = document.querySelector('.carousel-container');
-            const button = document.querySelector('.fullscreen-button i');
-            const fullscreenButton = document.querySelector('.fullscreen-button');
-
-            if (!container.classList.contains('fullscreen')) {
-                // Enter fullscreen
-                container.classList.add('fullscreen');
-                button.classList.remove('fa-compress');
-                button.classList.add('fa-expand');
-                fullscreenButton.setAttribute('title', 'Exit Fullscreen');
-                // Reset countdown for accurate timing
-                resetCountdown();
-            } else {
-                // Exit fullscreen
-                container.classList.remove('fullscreen');
-                button.classList.remove('fa-expand');
-                button.classList.add('fa-compress');
-                fullscreenButton.setAttribute('title', 'Enter Fullscreen');
-                // Reset countdown for accurate timing
-                resetCountdown();
-            }
-        }
-
         // Add keyboard shortcut for ESC key to exit fullscreen
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const container = document.querySelector('.carousel-container');
-                const button = document.querySelector('.fullscreen-button i');
-                const fullscreenButton = document.querySelector('.fullscreen-button');
-                
-                if (container.classList.contains('fullscreen')) {
-                    container.classList.remove('fullscreen');
-                    button.classList.remove('fa-expand');
-                    button.classList.add('fa-compress');
-                    fullscreenButton.setAttribute('title', 'Enter Fullscreen');
-                    // Reset countdown for accurate timing
-                    resetCountdown();
-                }
-            }
+            // Remove Escape key handling for fullscreen - we want to stay in fullscreen
         });
 
-        // Restart carousel when it reaches the end
-        document.getElementById('scheduleCarousel')?.addEventListener('slid.bs.carousel', function(event) {
-            const totalSlides = <?php echo isset($total_slides) ? $total_slides : 0; ?>;
-            if (event.to === totalSlides - 1) {
-                // Last slide - we'll automatically cycle to the first slide 
-                // after the duration via our custom timer
-                // No need for additional setTimeout here
-            }
-        });
+        // // Restart carousel when it reaches the end
+        // document.getElementById('scheduleCarousel')?.addEventListener('slid.bs.carousel', function(event) {
+        //     const totalSlides = document.querySelectorAll('.carousel-item').length;
+        //     if (event.to === totalSlides - 1) {
+        //         // Last slide - we'll automatically cycle to the first slide 
+        //         // after the duration via our custom timer
+        //         // No need for additional setTimeout here
+        //     }
+        // });
     </script>
 </body>
 </html> 

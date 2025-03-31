@@ -48,7 +48,7 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
     $fiveMinutesFromNow = date('H:i:s', strtotime($currentTime . ' + 5 minutes'));
 
     $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
-            r.name as room_name, c.course_name as course 
+            r.name as room_name, c.course_name as course, c.course_code
             FROM schedules s 
             JOIN professors p ON s.professor_id = p.id 
             JOIN rooms r ON s.room_id = r.id 
@@ -72,25 +72,45 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
     error_log("Current and starting soon schedules found: " . $result->num_rows);
     
     if($result->num_rows === 0) {
-        // If no current or starting soon schedule, get the next upcoming schedule
-        $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
-                r.name as room_name, c.course_name as course 
-                FROM schedules s 
-                JOIN professors p ON s.professor_id = p.id 
-                JOIN rooms r ON s.room_id = r.id 
-                JOIN courses c ON s.course_id = c.id 
-                WHERE s.day = ? 
-                AND s.start_time > ? 
-                ORDER BY s.start_time ASC 
-                LIMIT 4";
+        // Get the smallest upcoming start time
+        $sql = "SELECT MIN(start_time) as next_start_time 
+                FROM schedules 
+                WHERE day = ? 
+                AND start_time > ?";
                 
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("ss", $currentDayFormat, $fiveMinutesFromNow);
         $stmt->execute();
-        $result = $stmt->get_result();
+        $minResult = $stmt->get_result();
+        $nextStartTime = $minResult->fetch_assoc()['next_start_time'];
         
-        // Debug information
-        error_log("Upcoming schedules found: " . $result->num_rows);
+        // If there's a next start time, get all schedules for that hour
+        if ($nextStartTime) {
+            error_log("Next upcoming start time: " . $nextStartTime);
+            
+            // Extract hour from the next start time
+            $nextHour = date('H', strtotime($nextStartTime));
+            $hourStart = $nextHour . ':00:00';
+            $hourEnd = $nextHour . ':59:59';
+            
+            $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
+                    r.name as room_name, c.course_name as course, c.course_code
+                    FROM schedules s 
+                    JOIN professors p ON s.professor_id = p.id 
+                    JOIN rooms r ON s.room_id = r.id 
+                    JOIN courses c ON s.course_id = c.id 
+                    WHERE s.day = ? 
+                    AND s.start_time >= ? 
+                    AND s.start_time <= ?
+                    ORDER BY s.start_time ASC";
+                    
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("sss", $currentDayFormat, $hourStart, $hourEnd);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            error_log("Upcoming schedules for hour " . $nextHour . " found: " . $result->num_rows);
+        }
     }
     
     $schedules = $result->fetch_all(MYSQLI_ASSOC);
@@ -132,13 +152,38 @@ if (empty($schedules)) {
         .schedule-slide {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 1rem;
+            gap: 1.5rem;
             margin: 0 auto;
             max-width: 1200px;
+            max-height: calc(100vh - 250px); /* Set max height to enable scrolling */
+            overflow-y: auto; /* Add vertical scrollbar when needed */
+            padding-right: 10px; /* Add padding for scrollbar */
+            scrollbar-width: thin; /* Firefox */
         }
+        
+        /* Styling for webkit scrollbars */
+        .schedule-slide::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .schedule-slide::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+        
+        .schedule-slide::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+        
+        .schedule-slide::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+        
         .schedule-card {
             height: 100%;
             transition: all 0.3s ease;
+            margin: 0; /* Remove any default margins */
         }
         .carousel-control-prev,
         .carousel-control-next {
@@ -219,7 +264,6 @@ if (empty($schedules)) {
         /* Add new styles for schedule status */
         .schedule-card.inactive {
             opacity: 0.5;
-            pointer-events: none;
         }
         .schedule-status {
             position: absolute;
@@ -234,6 +278,8 @@ if (empty($schedules)) {
         .card-body {
             position: relative;
             padding-bottom: 40px; /* Make space for the status badge */
+            display: flex;
+            flex-direction: column;
         }
         .status-current {
             background-color: #28a745;
@@ -263,6 +309,24 @@ if (empty($schedules)) {
             left: 20px;
         }
         
+        /* Card content styles for consistent heights */
+        .card-title {
+            margin-bottom: 0.25rem;
+        }
+        
+        .card-subtitle {
+            min-height: 38px; /* Height that can accommodate two lines of text */
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            margin-bottom: 0.25rem;
+        }
+        
+        .schedule-card .d-flex {
+            margin-bottom: 1rem !important;
+        }
+        
         /* Dynamic card sizes for different screen resolutions when in fullscreen mode */
         @media screen and (min-height: 800px) {
             body.browser-fullscreen .schedule-card {
@@ -272,6 +336,15 @@ if (empty($schedules)) {
             
             body.browser-fullscreen .card-body {
                 padding: 1.25rem;
+            }
+            
+            body.browser-fullscreen .schedule-slide {
+                max-height: calc(100vh - 200px);
+            }
+            
+            body.browser-fullscreen .professor-image {
+                width: 100px;
+                height: 100px;
             }
         }
         
@@ -284,6 +357,15 @@ if (empty($schedules)) {
             body.browser-fullscreen .card-body {
                 padding: 1.5rem;
             }
+            
+            body.browser-fullscreen .schedule-slide {
+                max-height: calc(100vh - 180px);
+            }
+            
+            body.browser-fullscreen .professor-image {
+                width: 100px;
+                height: 100px;
+            }
         }
         
         @media screen and (min-height: 1200px) {
@@ -294,6 +376,15 @@ if (empty($schedules)) {
             
             body.browser-fullscreen .card-body {
                 padding: 1.75rem;
+            }
+            
+            body.browser-fullscreen .schedule-slide {
+                max-height: calc(100vh - 160px);
+            }
+            
+            body.browser-fullscreen .professor-image {
+                width: 100px;
+                height: 100px;
             }
         }
         
@@ -345,45 +436,76 @@ if (empty($schedules)) {
             margin: 10px 0;
         }
         
-        /* Countdown timer styles */
+        /* Countdown timer styles - replacing with progress bar */
         .countdown-timer {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, 0.6);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            z-index: 10000;
-            font-weight: bold;
-            transition: opacity 0.3s ease;
             display: none; /* Hide the countdown timer */
-        }
-        
-        #countdown {
-            display: inline-block;
-            min-width: 20px;
-            text-align: center;
         }
         
         /* Progress bar styles */
         .carousel-progress-container {
             position: fixed;
-            bottom: 0;
             left: 0;
             right: 0;
+            bottom: 0;
+            height: 8px;
+            display: block;
             z-index: 10000;
         }
         
         .progress {
-            height: 6px;
+            height: 100%;
             border-radius: 0;
-            background-color: transparent;
+            background-color: rgba(0, 0, 0, 0.1);
         }
         
-        .progress-bar {
+        #carouselProgress {
+            width: 0%;
+            height: 100%;
+            background-color: rgba(40, 167, 69, 0.9); /* Green color */
             transition: width 0.1s linear;
+        }
+
+        /* Manual navigation button styles */
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10001;
+        }
+        
+        .carousel-controls .btn {
+            padding: 8px 15px;
+            font-weight: 500;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+        
+        .carousel-controls .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .carousel-controls .btn-prev {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        
+        .carousel-controls .btn-next {
+            background-color: #6c757d;
+            color: white;
+            border-color: #6c757d;
+        }
+        
+        /* Hide navigation buttons in fullscreen mode */
+        body.browser-fullscreen .carousel-controls {
+            opacity: 0;
+            pointer-events: none;
         }
 
         /* Developer signature styles */
@@ -449,13 +571,37 @@ if (empty($schedules)) {
             padding: 2rem;
         }
 
+        /* Style for professor images */
+        .professor-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #f8f9fa;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        /* Adjust card layout for right-positioned image */
+        .card-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .card-header-text {
+            flex: 1;
+            padding-right: 15px;
+        }
+
     </style>
 </head>
 <body>
     <div class="university-header">
-        <img src="assets/images/ul-logo.png" alt="University Logo" class="university-logo logo">
+        <img src="images/ul-logo.png" alt="University Logo" class="university-logo logo">
         <h1 class="university-name">University of Luzon College of Computer Studies</h1>
-        <img src="assets/images/cs-logo.png" alt="Department Logo" class="department-logo logo">
+        <img src="images/cs-logo.png" alt="Department Logo" class="department-logo logo">
     </div>
 
     <div class="current-time" id="currentTime">
@@ -513,16 +659,17 @@ if (empty($schedules)) {
                              data-end="<?php echo $schedule['end_time']; ?>">
                             <div class="card-body">
                                 <div class="schedule-status"></div>
-                                <div class="d-flex align-items-center mb-3">
+                                <div class="card-header-content">
+                                    <div class="card-header-text">
+                                        <h5 class="card-title mb-2"><?php echo htmlspecialchars($schedule['course_code']); ?></h5>
+                                        <div class="card-subtitle mb-1"><?php echo htmlspecialchars($schedule['course']); ?></div>
+                                        <small class="text">Prof. <?php echo htmlspecialchars($schedule['professor_name']); ?></small>
+                                    </div>
                                     <img src="<?php 
                                         echo !empty($schedule['profile_image']) && $schedule['profile_image'] !== 'placeholder.png'
                                             ? 'uploads/' . htmlspecialchars($schedule['profile_image']) 
                                             : 'uploads/placeholder.png'; 
-                                    ?>" class="professor-image me-3" alt="Professor">
-                                    <div>
-                                        <h5 class="card-title mb-0"><?php echo htmlspecialchars($schedule['course']); ?></h5>
-                                        <small class="text-muted">Prof. <?php echo htmlspecialchars($schedule['professor_name']); ?></small>
-                                    </div>
+                                    ?>" class="professor-image" alt="Professor">
                                 </div>
                                 <p class="card-text">
                                     <i class="fas fa-clock me-2"></i>
@@ -560,6 +707,15 @@ if (empty($schedules)) {
                 </div>
                 <?php endforeach; ?>
             </div>
+            <!-- Add manual navigation buttons -->
+            <div class="carousel-controls">
+                <button class="btn btn-outline-secondary btn-prev" id="prevSlide">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="btn btn-outline-secondary btn-next" id="nextSlide">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
         </div>
         <?php endif; ?>
     </div>
@@ -593,23 +749,18 @@ if (empty($schedules)) {
                 document.getElementById('countdown').textContent = carouselDuration;
             }
             
-            // Initialize carousel with saved duration
+            // Initialize carousel without auto-cycling
             const carousel = document.getElementById('scheduleCarousel');
             if (carousel) {
-                // Remove the direct initialization and use a more controlled approach
+                // Initialize the carousel properly but without auto-cycling
                 carousel.removeAttribute('data-bs-ride');
                 carousel.setAttribute('data-bs-interval', 'false'); // Disable automatic cycling
                 
                 // Create carousel instance with no autoplay
                 carouselInstance = new bootstrap.Carousel(carousel, {
                     interval: false,  // Disable auto cycling
-                    pause: false      // Don't pause on hover
-                });
-                
-                // Use 'slid.bs.carousel' (happens after slide) instead of 'slide.bs.carousel'
-                carousel.addEventListener('slid.bs.carousel', function() {
-                    // Reset the countdown after a slide completes
-                    resetCountdown();
+                    pause: false,     // Don't pause on hover
+                    wrap: true        // Loop through slides
                 });
             }
             
@@ -632,6 +783,36 @@ if (empty($schedules)) {
             durationToggle.addEventListener('click', function() {
                 durationControl.classList.toggle('collapsed');
             });
+            
+            // Setup manual navigation buttons
+            const prevButton = document.getElementById('prevSlide');
+            const nextButton = document.getElementById('nextSlide');
+            
+            if (prevButton && nextButton) {
+                prevButton.addEventListener('click', function() {
+                    // Manual navigation implementation
+                    const carousel = document.getElementById('scheduleCarousel');
+                    const bsCarousel = bootstrap.Carousel.getInstance(carousel);
+                    if (bsCarousel) {
+                        bsCarousel.prev();
+                    }
+                    
+                    // Reset the countdown timer
+                    resetCountdown();
+                });
+                
+                nextButton.addEventListener('click', function() {
+                    // Manual navigation implementation
+                    const carousel = document.getElementById('scheduleCarousel');
+                    const bsCarousel = bootstrap.Carousel.getInstance(carousel);
+                    if (bsCarousel) {
+                        bsCarousel.next();
+                    }
+                    
+                    // Reset the countdown timer
+                    resetCountdown();
+                });
+            }
         });
         
         // Function to update carousel duration
@@ -653,60 +834,86 @@ if (empty($schedules)) {
             // Clear any existing interval
             if (countdownInterval) {
                 clearInterval(countdownInterval);
+                countdownInterval = null;
             }
             
             // Reset countdown value
             countdownValue = carouselDuration;
-            document.getElementById('countdown').textContent = countdownValue;
             
-            // Reset progress bar
+            // Reset progress bar to 0% immediately
             const progressBar = document.getElementById('carouselProgress');
-            progressBar.style.width = '0%';
-            
-            // Add 1-second delay before starting the countdown
-            setTimeout(function() {
-                // Calculate update interval for smoother progress bar
-                const updateInterval = 50; // milliseconds
-                const steps = (carouselDuration * 1000) / updateInterval;
-                let currentStep = 0;
+            if (progressBar) {
+                // Force a repaint by setting to 0 after a very brief timeout
+                progressBar.style.transition = 'none';
+                progressBar.style.width = '0%';
                 
-                // Start the countdown and progress bar update
-                countdownInterval = setInterval(function() {
-                    currentStep++;
+                // Force browser to repaint before starting animation
+                setTimeout(function() {
+                    progressBar.style.transition = 'width 0.1s linear';
                     
-                    // Update progress bar
-                    const progress = (currentStep / steps) * 100;
-                    progressBar.style.width = progress + '%';
+                    // Calculate how often to update the progress bar for smooth animation
+                    const updateInterval = 50; // Update every 50ms for smoother animation
+                    const steps = (carouselDuration * 1000) / updateInterval;
+                    const incrementPerStep = 100 / steps;
+                    let currentProgress = 0;
                     
-                    // Update countdown every second
-                    if (currentStep % (1000 / updateInterval) === 0) {
-                        countdownValue--;
-                        document.getElementById('countdown').textContent = countdownValue;
-                    }
-                    
-                    // When complete
-                    if (currentStep >= steps) {
-                        // When reaching the end, advance to the next slide
-                        if (carouselInstance) {
-                            carouselInstance.next();
+                    // Use a recursive setTimeout approach for precise timing
+                    function updateProgress() {
+                        currentProgress += incrementPerStep;
+                        
+                        // Update progress bar
+                        if (progressBar) {
+                            progressBar.style.width = Math.min(currentProgress, 100) + '%';
                         }
-                        // Don't reset here - it will be reset by the slid.bs.carousel event
-                        clearInterval(countdownInterval);
-                        progressBar.style.width = '100%';
+                        
+                        // When progress reaches 100%
+                        if (currentProgress >= 100) {
+                            // Wait just enough time to let the bar fill completely
+                            setTimeout(function() {
+                                // Get the carousel
+                                const carousel = document.getElementById('scheduleCarousel');
+                                if (carousel) {
+                                    const bsCarousel = bootstrap.Carousel.getInstance(carousel);
+                                    if (bsCarousel) {
+                                        // Listen for slide transition end
+                                        carousel.addEventListener('slid.bs.carousel', function onSlideEnd() {
+                                            carousel.removeEventListener('slid.bs.carousel', onSlideEnd);
+                                            
+                                            // Start next countdown after transition completes
+                                            setTimeout(function() {
+                                                startCountdown();
+                                            }, 100); // Small delay to ensure a clean start
+                                        }, { once: true });
+                                        
+                                        // Start slide change
+                                        bsCarousel.next();
+                                    }
+                                }
+                            }, 50);
+                            
+                            // Clear the interval
+                            clearInterval(countdownInterval);
+                            countdownInterval = null;
+                        } else {
+                            // Continue updating
+                            countdownInterval = setTimeout(updateProgress, updateInterval);
+                        }
                     }
-                }, updateInterval);
-            }, 100); // 1-second delay
+                    
+                    // Start progress updates
+                    countdownInterval = setTimeout(updateProgress, updateInterval);
+                }, 10);
+            }
         }
         
         // Function to reset the countdown timer
         function resetCountdown() {
-            countdownValue = carouselDuration;
-            document.getElementById('countdown').textContent = countdownValue;
-            
-            // Restart the countdown
             if (countdownInterval) {
-                clearInterval(countdownInterval);
+                clearTimeout(countdownInterval);
+                countdownInterval = null;
             }
+            
+            // Start a new countdown
             startCountdown();
         }
         
@@ -784,34 +991,23 @@ if (empty($schedules)) {
                     // Within 5 minutes before start time
                     statusElement.textContent = 'Starting Soon';
                     statusElement.className = 'schedule-status status-upcoming';
-                    card.classList.remove('inactive');
+                    // Don't add inactive class to any schedule status
                 } else if (currentTime < startTime) {
                     // More than 5 minutes before start
                     statusElement.textContent = 'Upcoming';
                     statusElement.className = 'schedule-status status-upcoming';
-                    card.classList.remove('inactive');
+                    // Don't add inactive class to any schedule status
                 } else if (currentTime >= startTime && currentTime <= endTime) {
                     statusElement.textContent = 'Current';
                     statusElement.className = 'schedule-status status-current';
-                    card.classList.remove('inactive');
+                    // Don't add inactive class to any schedule status
                 } else {
                     statusElement.textContent = 'Ended';
                     statusElement.className = 'schedule-status status-ended';
+                    // Just change visual appearance but don't make inactive
                     card.classList.add('inactive');
                 }
             });
-
-            // Check if all schedules in the current slide are inactive
-            const carousel = document.getElementById('scheduleCarousel');
-            const activeSlide = carousel.querySelector('.carousel-item.active');
-            if (activeSlide) {
-                const activeCards = activeSlide.querySelectorAll('.schedule-card:not(.inactive)');
-                if (activeCards.length === 0) {
-                    // All schedules in current slide are inactive, move to next slide
-                    const carouselInstance = bootstrap.Carousel.getInstance(carousel);
-                    carouselInstance.next();
-                }
-            }
         }
 
         // Update time and schedule statuses every second
@@ -829,15 +1025,10 @@ if (empty($schedules)) {
             // Remove Escape key handling for fullscreen - we want to stay in fullscreen
         });
 
-        // // Restart carousel when it reaches the end
-        // document.getElementById('scheduleCarousel')?.addEventListener('slid.bs.carousel', function(event) {
-        //     const totalSlides = document.querySelectorAll('.carousel-item').length;
-        //     if (event.to === totalSlides - 1) {
-        //         // Last slide - we'll automatically cycle to the first slide 
-        //         // after the duration via our custom timer
-        //         // No need for additional setTimeout here
-        //     }
-        // });
+        // Handle carousel slide events - remove this listener as we're now using one-time listeners
+        document.getElementById('scheduleCarousel')?.addEventListener('slid.bs.carousel', function(event) {
+            // This is handled by the one-time event listener in startCountdown
+        });
     </script>
 </body>
 </html> 

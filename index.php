@@ -207,7 +207,8 @@ if ($fixed_count > 0) {
                                                             : 'uploads/placeholder.png'; 
                                                     ?>" class="professor-image me-3" alt="Professor">
                                                     <div>
-                                                        <h5 class="card-title mb-0"><?php echo htmlspecialchars($schedule['course']); ?></h5>
+                                                        <h5 class="card-title mb-0"><?php echo htmlspecialchars($schedule['course_code']); ?></h5>
+                                                        <div class="card-subtitle mb-1"><?php echo htmlspecialchars($schedule['course']); ?></div>
                                                         <small class="text-muted">Prof. <?php echo htmlspecialchars($schedule['professor_name']); ?></small>
                                                     </div>
                                                 </div>

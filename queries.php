@@ -26,7 +26,8 @@ function getSchedules($conn) {
             p.name AS professor_name, 
             p.profile_image,
             r.name AS room_name,
-            c.course_name AS course
+            c.course_name AS course,
+            c.course_code
             FROM schedules s
             LEFT JOIN professors p ON s.professor_id = p.id
             LEFT JOIN rooms r ON s.room_id = r.id
@@ -212,7 +213,8 @@ function searchSchedules($conn, $searchTerm) {
             p.name AS professor_name, 
             p.profile_image,
             r.name AS room_name,
-            c.course_name AS course
+            c.course_name AS course,
+            c.course_code
             FROM schedules s
             LEFT JOIN professors p ON s.professor_id = p.id
             LEFT JOIN rooms r ON s.room_id = r.id

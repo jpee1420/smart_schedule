@@ -1,5 +1,8 @@
 <?php
-require_once 'config.php';
+// Include database check
+require_once 'db_check.php';  // This already includes config.php and starts the session
+
+// Include models
 require_once 'queries.php';
 
 // Set headers to prevent caching

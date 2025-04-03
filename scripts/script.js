@@ -117,7 +117,7 @@ function updateProfessorStatus(professorId, status) {
                         badgeClass = 'warning';
                         textClass = 'text-dark';
                     } else if (status === 'On Meeting') {
-                        badgeClass = 'primary';
+                        badgeClass = 'info';
                         textClass = 'text-white';
                     }
                     badge.className = `badge bg-${badgeClass} ${textClass}`;

@@ -292,12 +292,27 @@ function updateProfessorImage($conn, $professor_id, $new_image) {
 
 // Check if professor image exists and fix if missing
 function verifyAndFixProfessorImage($conn, $professor_id) {
+    // Check if connection is valid
+    if (!$conn || !($conn instanceof mysqli)) {
+        return false;
+    }
+    
     // Get professor's current image
     $sql = "SELECT profile_image FROM professors WHERE id = ?";
     $stmt = $conn->prepare($sql);
+    
+    if (!$stmt) {
+        return false;
+    }
+    
     $stmt->bind_param("i", $professor_id);
     $stmt->execute();
     $result = $stmt->get_result();
+    
+    if (!$result) {
+        return false;
+    }
+    
     $professor = $result->fetch_assoc();
     
     if ($professor && $professor['profile_image'] !== 'placeholder.png') {
@@ -307,6 +322,11 @@ function verifyAndFixProfessorImage($conn, $professor_id) {
         if (!file_exists($image_path)) {
             $sql = "UPDATE professors SET profile_image = 'placeholder.png' WHERE id = ?";
             $stmt = $conn->prepare($sql);
+            
+            if (!$stmt) {
+                return false;
+            }
+            
             $stmt->bind_param("i", $professor_id);
             $stmt->execute();
             return true; 
@@ -317,8 +337,19 @@ function verifyAndFixProfessorImage($conn, $professor_id) {
 
 // Verify all professor images
 function verifyAllProfessorImages($conn) {
+    // Check if connection is valid
+    if (!$conn || !($conn instanceof mysqli)) {
+        return 0;
+    }
+    
     $sql = "SELECT id, profile_image FROM professors WHERE profile_image != 'placeholder.png'";
     $result = $conn->query($sql);
+    
+    // Check if query was successful
+    if (!$result) {
+        return 0;
+    }
+    
     $fixed_count = 0;
     
     while ($row = $result->fetch_assoc()) {

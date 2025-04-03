@@ -1,10 +1,22 @@
 <?php
-session_start();
-require_once 'config.php';
+// Include database check
+require_once 'db_check.php';  // This already includes config.php and starts the session
+
+// Error reporting for debugging
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+// Debug information
+error_log("process_professor.php - BASE_URL: " . BASE_URL);
+error_log("process_professor.php - Current REQUEST_METHOD: " . $_SERVER['REQUEST_METHOD']);
+error_log("process_professor.php - GET parameters: " . print_r($_GET, true));
+
+// Include models
 require_once 'queries.php';
 
 // Create uploads directory if it doesn't exist
-$uploadDir = 'uploads';
+$uploadDir = dirname(__FILE__) . '/uploads';
+error_log("Upload directory path: " . $uploadDir);
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0777, true);
 }

@@ -1,13 +1,18 @@
 <?php
-session_start();
-require_once 'config.php';
+// Include database check
+require_once 'db_check.php';  // This already includes config.php and starts the session
+
+// Include models
 require_once 'queries.php';
 
-// Verify all professor images at page load
-$fixed_count = verifyAllProfessorImages($conn);
-if ($fixed_count > 0) {
-    $_SESSION['message'] = "Fixed {$fixed_count} missing professor image(s).";
-    $_SESSION['message_type'] = 'warning';
+// Only verify professor images if database connection exists
+if (isset($conn) && $conn instanceof mysqli) {
+    // Verify all professor images at page load
+    $fixed_count = verifyAllProfessorImages($conn);
+    if ($fixed_count > 0) {
+        $_SESSION['message'] = "Fixed {$fixed_count} missing professor image(s).";
+        $_SESSION['message_type'] = 'warning';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -636,10 +641,24 @@ if ($fixed_count > 0) {
         }
         
         function updateStatusSelectStyle(selectElement) {
-            selectElement.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-primary', 'text-white', 'text-dark');
-            
-            // Add appropriate classes based on selection
+            selectElement.classList.remove('bg-success', 'bg-danger', 'bg-warning', 'bg-info', 'text-white', 'text-dark');
             const status = selectElement.value;
+
+            // switch(status) {
+            //     case 'Present':
+            //         selectElement.classList.add('bg-success', 'text-white');
+            //         break;
+            //     case 'Absent':
+            //         select  Element.classList.add('bg-danger', 'text-white');
+            //         break;
+            //     case 'On Meeting':
+            //         selectElement.classList.add('bg-warning', 'text-dark');
+            //         break;
+            //     case 'On Leave':
+            //         selectElement.classList.add('bg-info', 'text-dark');
+            //         break;
+            // }
+
             if (status === 'Present') {
                 selectElement.classList.add('bg-success', 'text-white');
             } else if (status === 'Absent') {

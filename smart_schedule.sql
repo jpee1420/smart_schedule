@@ -20,7 +20,7 @@ SET time_zone = "+00:00";
 --
 -- Database: `smart_schedule`
 
-CREATE DATABASE `smart_schedule`;
+CREATE DATABASE IF NOT EXISTS `smart_schedule`;
 USE smart_schedule;
 --
 
@@ -31,10 +31,11 @@ USE smart_schedule;
 --
 
 CREATE TABLE `courses` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `course_code` varchar(10) NOT NULL,
   `course_name` varchar(100) NOT NULL,
-  `lab` tinyint(1) NOT NULL
+  `lab` tinyint(1) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -108,9 +109,10 @@ INSERT INTO `courses` (`id`, `course_code`, `course_name`, `lab`) VALUES
 --
 
 CREATE TABLE `professors` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
-  `profile_image` varchar(255) DEFAULT 'placeholder.png'
+  `profile_image` varchar(255) DEFAULT 'placeholder.png',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -135,8 +137,9 @@ INSERT INTO `professors` (`id`, `name`, `profile_image`) VALUES
 --
 
 CREATE TABLE `rooms` (
-  `id` int(11) NOT NULL,
-  `name` varchar(255) NOT NULL
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -162,14 +165,18 @@ INSERT INTO `rooms` (`id`, `name`) VALUES
 --
 
 CREATE TABLE `schedules` (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `room_id` int(11) DEFAULT NULL,
   `professor_id` int(11) DEFAULT NULL,
   `course_id` int(11) NOT NULL,
   `start_time` time DEFAULT NULL,
   `end_time` time DEFAULT NULL,
   `day` enum('MWF','TTH','Sat') DEFAULT 'MWF',
-  `professor_status` enum('Present','Absent','On Leave') DEFAULT 'Present'
+  `professor_status` enum('Present','Absent','On Leave', 'On Meeting') DEFAULT 'Present',
+  PRIMARY KEY (`id`),
+  KEY `room_id` (`room_id`),
+  KEY `professor_id` (`professor_id`),
+  KEY `course_id` (`course_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -282,75 +289,6 @@ INSERT INTO `schedules` (`id`, `room_id`, `professor_id`, `course_id`, `start_ti
 --
 
 --
--- Indexes for table `courses`
---
-ALTER TABLE `courses`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `professors`
---
-ALTER TABLE `professors`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `rooms`
---
-ALTER TABLE `rooms`
-  ADD PRIMARY KEY (`id`);
-
---
--- Indexes for table `schedules`
---
-ALTER TABLE `schedules`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `course_id` (`course_id`),
-  ADD KEY `room_id` (`room_id`),
-  ADD KEY `professor_id` (`professor_id`);
-
---
--- AUTO_INCREMENT for dumped tables
---
-SET @max_id = (SELECT COALESCE(MAX(id), 0) FROM courses);
-ALTER TABLE `courses`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=@max_id + 1;
-
-SET @max_id = (SELECT COALESCE(MAX(id), 0) FROM professors);
-ALTER TABLE `professors`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=@max_id + 1;
-
-SET @max_id = (SELECT COALESCE(MAX(id), 0) FROM rooms);
-ALTER TABLE `rooms`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=@max_id + 1;
-
-SET @max_id = (SELECT COALESCE(MAX(id), 0) FROM schedules);
-ALTER TABLE `schedules`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=@max_id + 1;
---
--- -- AUTO_INCREMENT for table `courses`
--- --
--- ALTER TABLE `courses`
---   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=59;
-
--- --
--- -- AUTO_INCREMENT for table `professors`
--- --
--- ALTER TABLE `professors`
---   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
-
--- --
--- -- AUTO_INCREMENT for table `rooms`
--- --
--- ALTER TABLE `rooms`
---   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
-
--- --
--- -- AUTO_INCREMENT for table `schedules`
--- --
--- ALTER TABLE `schedules`
---   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=100;
-
---
 -- Constraints for dumped tables
 --
 
@@ -358,11 +296,8 @@ ALTER TABLE `schedules`
 -- Constraints for table `schedules`
 --
 ALTER TABLE `schedules`
-  ADD CONSTRAINT `course_id` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
-  ADD CONSTRAINT `professor_id` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`),
-  ADD CONSTRAINT `room_id` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`);
-COMMIT;
+  ADD CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
 
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+COMMIT;

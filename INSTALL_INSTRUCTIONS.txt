@@ -1,0 +1,57 @@
+Smart Schedule & Digital Signage Installation Instructions
+===================================================
+
+This package contains two applications:
+1. Smart Schedule - A schedule management system for educational institutions
+2. Digital Signage - A digital signage solution
+
+The following instructions will guide you through the installation process for both projects.
+
+Prerequisites:
+-------------
+1. XAMPP installed on your computer (Apache and MySQL)
+2. Administrator privileges on your computer
+
+Installation Steps:
+-----------------
+1. Extract the ZIP/RAR file to a location of your choice.
+
+2. Right-click on the "install_projects.bat" file and select "Run as administrator".
+   This is necessary to give the script permission to copy files to the XAMPP directory.
+
+3. The script will:
+   - Check if XAMPP is installed in common locations
+   - If XAMPP is not found, you will be prompted to enter your XAMPP installation path
+   - For each project (Smart Schedule and Digital Signage):
+     - Verify if the project folder already exists in htdocs (and ask if you want to overwrite it)
+     - Copy all project files to the XAMPP htdocs directory
+   - You can choose to install either one or both projects
+
+4. After the files are copied, follow these steps:
+   - Start XAMPP Control Panel and ensure Apache and MySQL services are running
+   
+   For Smart Schedule:
+   - Open your web browser and navigate to: http://localhost/smart_schedule/install/
+   - Follow the on-screen instructions to import the database
+   - Once installation is complete, access the application at: http://localhost/smart_schedule/
+   
+   For Digital Signage:
+   - Open your web browser and navigate to: http://localhost/digital_signage/install/
+   - Follow the on-screen instructions to import the database
+   - Once installation is complete, access the application at: http://localhost/digital_signage/
+
+Folder Structure:
+---------------
+When compressing these projects, use the following structure:
+- install_projects.bat (at the root)
+- INSTALL_INSTRUCTIONS.txt (at the root)
+- /smart_schedule/ (folder containing all Smart Schedule files)
+- /digital_signage/ (folder containing all Digital Signage files)
+
+Troubleshooting:
+--------------
+- If the batch file cannot find XAMPP, make sure it's installed and provide the correct path when prompted
+- If copying fails, ensure no applications are using the files and that you have administrator privileges
+- If you encounter database errors during installation, make sure MySQL is running and the root password is correct
+
+For more detailed documentation, please refer to the README.md files within each project folder. 

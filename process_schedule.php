@@ -79,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sql = "DELETE FROM schedules WHERE id = $id";
 
     if ($conn->query($sql)) {
-        $_SESSION['message'] = 'Schedule deleted successfully!';
+        $_SESSION['message'] = 'Schedule deleted successfully!'; 
         $_SESSION['message_type'] = 'success';
     } else {
         $_SESSION['message'] = 'Error deleting schedule: ' . $conn->error;

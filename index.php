@@ -2,6 +2,12 @@
 // Include database check
 require_once 'db_check.php';  // This already includes config.php and starts the session
 
+// Check if user is logged in
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header('Location: ' . BASE_URL . '/login.php');
+    exit;
+}
+
 // Include models
 require_once 'queries.php';
 
@@ -60,6 +66,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <div class="d-flex flex-column">
                     <div class="p-3 text-white">
                         <h4>Admin Panel</h4>
+                        <small class="text-light">Welcome, <?php echo htmlspecialchars($_SESSION['admin_username']); ?></small>
                     </div>
                     <nav class="nav flex-column">
                         <a class="nav-link active" href="#schedules" data-bs-toggle="tab">
@@ -73,6 +80,9 @@ if (isset($conn) && $conn instanceof mysqli) {
                         </a>
                         <a class="nav-link" href="#courses" data-bs-toggle="tab">
                             <i class="fas fa-book me-2"></i> Courses
+                        </a>
+                        <a class="nav-link text-danger" href="logout.php">
+                            <i class="fas fa-sign-out-alt me-2"></i> Logout
                         </a>
                     </nav>
                 </div>
@@ -592,7 +602,6 @@ if (isset($conn) && $conn instanceof mysqli) {
         <?php include 'modals/course_modal.php'; ?>
         <?php include 'modals/confirm_delete_modal.php'; ?>
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script> -->
     <script src="js/bootstrap.bundle.min.js"></script>
     <script src="scripts/script.js"></script>
     <script src="scripts/filter.js"></script>

@@ -1,46 +1,13 @@
--- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
--- Host: 127.0.0.1
--- Generation Time: Mar 21, 2025 at 07:29 AM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
-
-SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
-SET time_zone = "+00:00";
-
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8mb4 */;
-
---
--- Database: `smart_schedule`
-
 CREATE DATABASE IF NOT EXISTS `smart_schedule`;
-USE smart_schedule;
---
+USE `smart_schedule`;
 
--- --------------------------------------------------------
-
---
--- Table structure for table `courses`
---
-
-CREATE TABLE `courses` (
+CREATE TABLE IF NOT EXISTS `courses` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `course_code` varchar(10) NOT NULL,
   `course_name` varchar(100) NOT NULL,
   `lab` tinyint(1) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `courses`
---
+);
 
 INSERT INTO `courses` (`id`, `course_code`, `course_name`, `lab`) VALUES
 (1, 'CCS111', 'Introduction to Computing', 0),
@@ -102,22 +69,12 @@ INSERT INTO `courses` (`id`, `course_code`, `course_name`, `lab`) VALUES
 (57, 'NSTP12', 'National Service Training Program 2', 0),
 (58, 'ELE002L', 'Data Analytics', 1);
 
--- --------------------------------------------------------
-
---
--- Table structure for table `professors`
---
-
-CREATE TABLE `professors` (
+CREATE TABLE IF NOT EXISTS `professors` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `profile_image` varchar(255) DEFAULT 'placeholder.png',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `professors`
---
+);
 
 INSERT INTO `professors` (`id`, `name`, `profile_image`) VALUES
 (1, 'Rina Cabansag', 'placeholder.png'),
@@ -130,21 +87,11 @@ INSERT INTO `professors` (`id`, `name`, `profile_image`) VALUES
 (8, 'Ruzleen Soriano', 'placeholder.png'),
 (9, 'TBA', 'placeholder.png');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `rooms`
---
-
-CREATE TABLE `rooms` (
+CREATE TABLE IF NOT EXISTS  `rooms` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `rooms`
---
+);
 
 INSERT INTO `rooms` (`id`, `name`) VALUES
 (1, 'LR1'),
@@ -158,13 +105,7 @@ INSERT INTO `rooms` (`id`, `name`) VALUES
 (9, 'Gym'),
 (10, 'Consultation');
 
--- --------------------------------------------------------
-
---
--- Table structure for table `schedules`
---
-
-CREATE TABLE `schedules` (
+CREATE TABLE IF NOT EXISTS  `schedules` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `room_id` int(11) DEFAULT NULL,
   `professor_id` int(11) DEFAULT NULL,
@@ -177,11 +118,7 @@ CREATE TABLE `schedules` (
   KEY `room_id` (`room_id`),
   KEY `professor_id` (`professor_id`),
   KEY `course_id` (`course_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Dumping data for table `schedules`
---
+);
 
 INSERT INTO `schedules` (`id`, `room_id`, `professor_id`, `course_id`, `start_time`, `end_time`, `day`, `professor_status`) VALUES
 (1, 1, 3, 12, '09:00:00', '10:00:00', 'MWF', 'Present'),
@@ -284,20 +221,7 @@ INSERT INTO `schedules` (`id`, `room_id`, `professor_id`, `course_id`, `start_ti
 (98, 4, 9, 56, '10:00:00', '13:00:00', 'Sat', 'Present'),
 (99, 4, 9, 56, '13:00:00', '16:00:00', 'Sat', 'Present');
 
---
--- Indexes for dumped tables
---
-
---
--- Constraints for dumped tables
---
-
---
--- Constraints for table `schedules`
---
 ALTER TABLE `schedules`
   ADD CONSTRAINT `schedules_ibfk_1` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `schedules_ibfk_2` FOREIGN KEY (`professor_id`) REFERENCES `professors` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `schedules_ibfk_3` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE;
-
-COMMIT;

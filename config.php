@@ -6,7 +6,7 @@ $db_pass = '';
 $db_name = 'smart_schedule';
 
 // Define base URL for the application
-define('BASE_URL', '/cmss');
+define('BASE_URL', '/smart_schedule');
 
 // Connect without database first to check if it exists
 $tempConn = new mysqli($db_host, $db_user, $db_pass);

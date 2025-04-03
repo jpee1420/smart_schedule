@@ -95,22 +95,22 @@ function getCurrentSchedules($conn, $currentTime, $currentDayFormat) {
             $hourStart = $nextHour . ':00:00';
             $hourEnd = $nextHour . ':59:59';
             
-            $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
+        $sql = "SELECT s.*, p.name as professor_name, p.profile_image, s.professor_status, 
                     r.name as room_name, c.course_name as course, c.course_code
-                    FROM schedules s 
-                    JOIN professors p ON s.professor_id = p.id 
-                    JOIN rooms r ON s.room_id = r.id 
-                    JOIN courses c ON s.course_id = c.id 
-                    WHERE s.day = ? 
+                FROM schedules s 
+                JOIN professors p ON s.professor_id = p.id 
+                JOIN rooms r ON s.room_id = r.id 
+                JOIN courses c ON s.course_id = c.id 
+                WHERE s.day = ? 
                     AND s.start_time >= ? 
                     AND s.start_time <= ?
                     ORDER BY s.start_time ASC";
-                    
-            $stmt = $conn->prepare($sql);
+                
+        $stmt = $conn->prepare($sql);
             $stmt->bind_param("sss", $currentDayFormat, $hourStart, $hourEnd);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
             error_log("Upcoming schedules for hour " . $nextHour . " found: " . $result->num_rows);
         }
     }
@@ -206,7 +206,7 @@ if (empty($schedules)) {
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-fill-color: transparent;
+            /* text-fill-color: transparent; */
         }
         
         .university-name .college-text {
@@ -214,7 +214,7 @@ if (empty($schedules)) {
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-fill-color: transparent;
+            /* text-fill-color: transparent; */
         }
         
         .logo {
@@ -253,7 +253,7 @@ if (empty($schedules)) {
             min-height: 38px;
             overflow: hidden;
             display: -webkit-box;
-            -webkit-line-clamp: 2;
+            /* -webkit-line-clamp: 2; */
             -webkit-box-orient: vertical;
             margin-bottom: 0.25rem;
         }
@@ -611,7 +611,7 @@ if (empty($schedules)) {
                 min-height: 220px;
             }
             
-            .card-body {
+        .card-body {
                 padding: 1rem;
             }
             
@@ -630,7 +630,7 @@ if (empty($schedules)) {
             }
             
             .card-text {
-                position: relative;
+            position: relative;
                 margin-bottom: 0.5rem;
                 font-size: 0.7rem;
                 bottom: 10px;
@@ -954,10 +954,10 @@ if (empty($schedules)) {
             <div class="carousel-controls">
                 <button class="btn btn-outline-secondary btn-prev" id="prevSlide">
                     <i class="fas fa-chevron-left"></i>
-                </button>
+            </button>
                 <button class="btn btn-outline-secondary btn-next" id="nextSlide">
                     <i class="fas fa-chevron-right"></i>
-                </button>
+            </button>
             </div>
         </div>
         <?php endif; ?>
@@ -1171,7 +1171,7 @@ if (empty($schedules)) {
                 hour: '2-digit',
                 minute: '2-digit',
                 second: '2-digit',
-                hour12: true
+                hour12: true 
             };
             const dateStr = now.toLocaleString('en-US', options);
             // Format: "Monday, 03/25/2024, 2:30:45 PM"
